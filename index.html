@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#201b1b"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#090a10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Velora">
-<meta name="description" content="A considered edit of modern women's fashion."><meta property="og:title" content="Velora — The Art of Dressing"><meta property="og:description" content="Discover the new season edit."><meta property="og:image" content="icons/og-image.png">
+<meta name="description" content="A considered edit of modern women's fashion and a private messaging space."><meta property="og:title" content="Velora — The Art of Dressing"><meta property="og:description" content="Discover the new season edit."><meta property="og:image" content="icons/og-image.png">
 <link rel="icon" type="image/svg+xml" href="icons/logo-mark.svg"><link rel="icon" href="icons/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/premium.css"><link rel="stylesheet" href="css/chat.css">
+<link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="css/style.css?v=1.2.1"><link rel="stylesheet" href="css/premium.css?v=1.2.1"><link rel="stylesheet" href="css/chat.css?v=1.2.1">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <title>Velora — The Art of Dressing</title>
 </head>
@@ -22,9 +22,8 @@
 <div id="searchBar" class="search-bar" hidden><input id="searchInput" type="search" placeholder="Search the collection…" aria-label="Search collection"><button id="searchSubmit" class="btn btn-dark">Search</button></div>
 <main id="storeView">
 <section id="homePage" class="page">
-  <div class="hero">
-    <div class="hero-copy"><p class="eyebrow">THE AUTUMN / WINTER EDITION</p><h1>Quietly<br><em>extraordinary.</em></h1><p class="hero-desc">Pieces to keep. Silhouettes to remember. A new perspective on everyday elegance.</p><button class="btn btn-dark" data-route="shop">Explore the collection <span>↗</span></button><div class="hero-note">01 — 04 <span class="rule"></span> THE NEW SEASON</div></div>
-    <div class="hero-image"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1200&q=85" alt="Autumn fashion editorial" onerror="this.src='https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=85'"><div class="image-caption">FORM, FEELING, FOREVER.</div></div>
+  <div class="hero hero-poster" aria-label="Velora fashion campaign poster">
+    <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=2000&q=90" alt="Velora fashion campaign editorial" fetchpriority="high" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2000&q=85'">
   </div>
   <section class="section category-section"><div class="section-heading"><p class="eyebrow">FIND YOUR FORM</p><h2>Shop by <em>category</em></h2></div><div id="categoryGrid" class="category-grid"></div></section>
   <section class="section"><div class="section-heading row-heading"><div><p class="eyebrow">JUST ARRIVED</p><h2>The latest <em>edit</em></h2></div><button class="text-link" data-route="shop">View all ↗</button></div><div id="newArrivals" class="product-grid"></div></section>
@@ -37,10 +36,32 @@
 <section id="bagPage" class="page" hidden><div class="page-intro"><p class="eyebrow">YOUR SELECTION</p><h1>The <em>bag.</em></h1></div><div id="bagContents" class="bag-layout"></div></section>
 <section id="profilePage" class="page" hidden><div class="page-intro"><p class="eyebrow">YOUR VELORA</p><h1>A space of <em>your own.</em></h1><p>Your saved pieces and preferences, all in one place.</p></div><div class="profile-card"><div class="profile-monogram">V</div><h2>Welcome to Velora</h2><p>Your personal edit is waiting.</p><button class="btn btn-dark" data-route="wishlist">View wishlist</button></div></section>
 </main>
-<footer class="site-footer"><div class="footer-brand"><img src="icons/logo-wordmark.svg" alt="Velora"><p>Elegance, without excess.</p></div><div class="footer-links"><span>Customer care</span><span>Our story</span><span>Shipping & returns</span><span>Privacy</span></div><div class="footer-bottom"><span>© 2026 VELORA STUDIO</span><span id="versionLabel">v1.1.0</span><span>MADE WITH INTENTION</span></div></footer>
+<footer class="site-footer"><div class="footer-brand"><img src="icons/logo-wordmark.svg" alt="Velora"><p>Elegance, without excess.</p></div><div class="footer-links"><span>Customer care</span><span>Our story</span><span>Shipping & returns</span><span>Privacy</span></div><div class="footer-bottom"><span>© 2026 VELORA STUDIO</span><span id="versionLabel">v1.0.0</span><span>MADE WITH INTENTION</span></div></footer>
 <nav class="mobile-nav" aria-label="Mobile navigation"><button data-route="home" class="active"><span>⌂</span>Home</button><button data-route="shop"><span>◇</span>Shop</button><button data-route="wishlist"><span>♡</span>Wishlist</button><button data-route="bag"><span>♧</span>Bag <b id="mobileBagCount">0</b></button><button data-route="profile"><span>○</span>Profile</button></nav>
 </div>
 <div id="premiumView" class="overlay-view" hidden></div><div id="chatView" class="overlay-view chat-view" hidden></div><div id="toast" class="toast" role="status" aria-live="polite"></div>
 <dialog id="productDialog" class="product-dialog"><button class="dialog-close" id="closeProduct" aria-label="Close">×</button><div id="productDetail"></div></dialog>
-<script type="module" src="js/updater.js"></script><script type="module" src="js/store.js"></script>
+<script>
+/* Independent boot failsafe: module/import failures must never trap the visitor on the splash. */
+(function () {
+  var bootTimer = setTimeout(function () {
+    var splash = document.getElementById('splash');
+    var app = document.getElementById('app');
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(function () { if (splash.isConnected) splash.remove(); }, 300);
+    }
+    if (app) app.hidden = false;
+  }, 4500);
+  window.addEventListener('velora:boot-complete', function () { clearTimeout(bootTimer); });
+  window.addEventListener('error', function (event) {
+    if (event && event.message) console.error('[Velora boot]', event.message, event.filename || '');
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    console.error('[Velora boot promise]', event.reason || event);
+  });
+})();
+</script>
+<script type="module" src="js/updater.js?v=1.2.1"></script>
+<script type="module" src="js/store.js?v=1.2.1"></script>
 </body></html>
