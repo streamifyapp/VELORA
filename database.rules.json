@@ -5,7 +5,7 @@
     "appMeta": {
       "version": {
         ".read": true,
-        ".write": false
+        ".write": true
       }
     },
     "users": {
