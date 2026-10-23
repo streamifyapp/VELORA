@@ -1,5 +1,20 @@
 import { CONFIG } from "./config.js";
-export function backToStore(){const chat=document.getElementById("chatView");if(chat){chat.innerHTML="";chat.hidden=true;}document.getElementById("premiumView").hidden=true;document.getElementById("app").hidden=false;document.title="Velora — The Art of Dressing";document.body.dataset.route="home";window.dispatchEvent(new Event("velora:show-store"));}
-export function installDisguiseControls(){let last=0;document.addEventListener("pointerdown",()=>{const now=Date.now();if(now-last<320&&document.getElementById("chatView")?.hidden===false)backToStore();last=now;});window.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("chatView")?.hidden===false)backToStore();});window.addEventListener("blur",()=>{if(document.getElementById("chatView")?.hidden===false)backToStore();});document.addEventListener("visibilitychange",()=>{if(document.hidden&&document.getElementById("chatView")?.hidden===false)backToStore();});}
-export {CONFIG};
+export function backToStore() {
+  const chat = document.getElementById("chatView");
+  if (chat) { chat.innerHTML = ""; chat.hidden = true; }
+  const premium = document.getElementById("premiumView"); if (premium) premium.hidden = true;
+  const app = document.getElementById("app"); if (app) app.hidden = false;
+  document.title = "Velora — The Art of Dressing";
+  document.body.dataset.route = "home";
+  try { sessionStorage.removeItem("velora-chat-active"); } catch {}
+  window.dispatchEvent(new Event("velora:show-store"));
+}
+export function installDisguiseControls() {
+  // Do not auto-close on focus/visibility changes: those events fire during normal mobile/browser use.
+  // The user can still deliberately return using the in-app store button or Escape.
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape" && document.getElementById("chatView")?.hidden === false) backToStore();
+  });
+}
+export { CONFIG };
 installDisguiseControls();
