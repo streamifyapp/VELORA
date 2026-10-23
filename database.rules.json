@@ -1,0 +1,85 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "appMeta": {
+      "version": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "usernames": {
+      "$name": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))"
+      }
+    },
+    "emailIndex": {
+      "$email": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))"
+      }
+    },
+    "friendRequests": {
+      "$receiver": {
+        "$sender": {
+          ".read": "auth != null && (auth.uid === $receiver || auth.uid === $sender)",
+          ".write": "auth != null && (auth.uid === $sender || (auth.uid === $receiver && !newData.exists()))"
+        }
+      }
+    },
+    "friends": {
+      "$uid": {
+        "$other": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && (auth.uid === $uid || auth.uid === $other)"
+        }
+      }
+    },
+    "blocked": {
+      "$uid": {
+        "$other": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+    "chats": {
+      "$chatId": {
+        ".read": "auth != null && data.child('members').child(auth.uid).val() === true",
+        ".write": "auth != null && newData.child('members').child(auth.uid).val() === true",
+        "members": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "messages": {
+          "$messageId": {
+            ".read": "auth != null && root.child('chats').child($chatId).child('members').child(auth.uid).val() === true",
+            ".write": "auth != null && root.child('chats').child($chatId).child('members').child(auth.uid).val() === true && newData.child('text').isString() && newData.child('text').val().length <= 5000"
+          }
+        }
+      }
+    },
+    "presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "typing": {
+      "$chatId": {
+        "$uid": {
+          ".read": "auth != null && root.child('chats').child($chatId).child('members').child(auth.uid).val() === true",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    }
+  }
+}
