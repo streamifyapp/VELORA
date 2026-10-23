@@ -1,5 +1,5 @@
 export const CONFIG = Object.freeze({
-  APP_VERSION: "1.1.0",
+  APP_VERSION: "1.2.0",
   REFERRAL_CODE_HASH: "9f9f1bfc463db59c3e7c86fea2c2a0657c18211e9bfc7a2f52271e68b48b27c0",
   MAX_ATTEMPTS: 3,
   LOCKOUT_SECONDS: 60,

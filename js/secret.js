@@ -5,7 +5,7 @@ export function backToStore(){
   if(chat){chat.innerHTML="";chat.hidden=true;}
   const premium=document.getElementById("premiumView");
   if(premium){premium.innerHTML="";premium.hidden=true;}
-  const app=document.getElementById("app");
+  document.body.classList.remove("chat-on");const app=document.getElementById("app");
   if(app)app.hidden=false;
   document.title="Velora — The Art of Dressing";
   document.body.dataset.route="home";
