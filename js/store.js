@@ -36,16 +36,23 @@ function openPremium(){
   renderPremium({
     onClose:()=>{ $("#premiumView").hidden=true; $("#chatView").hidden=true; $("#app").hidden=false; },
     onUnlock:async()=>{
-      await authReady;
-      const user=auth.currentUser;
-      if(!user){ const m=await import("./auth.js"); m.openAuth(); return; }
+      // Leave the store hidden while resolving the next destination.
+      $("#app").hidden=true; $("#premiumView").hidden=true; $("#chatView").hidden=true;
       try {
+        await authReady;
+        let user=auth.currentUser;
+        // Firebase persistence can resolve before the first auth-state restoration callback.
+        if(!user) user=await new Promise(resolve=>{
+          let settled=false;
+          const timer=setTimeout(()=>{if(!settled){settled=true;resolve(auth.currentUser||null);}},1800);
+          const unsub=fb.onAuthStateChanged(auth,u=>{if(!settled){settled=true;clearTimeout(timer);unsub();resolve(u||null);}});
+        });
+        if(!user){ const m=await import("./auth.js"); m.openAuth(); return; }
         const snap=await fb.get(fb.ref(db,`users/${user.uid}/username`));
         if(snap.exists()) { const m=await import("./chat.js"); await m.openChat(user); }
         else { const m=await import("./profile.js"); m.openProfile(user); }
       } catch(err) {
-        console.error("Could not verify the signed-in profile:",err);
-        // Keep the saved Firebase login; let the user retry sign-in/profile flow instead of silently bypassing the key.
+        console.error("Could not complete Premium sign-in routing:",err);
         const m=await import("./auth.js"); m.openAuth();
       }
     }
