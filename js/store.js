@@ -1,7 +1,6 @@
 import { CONFIG } from "./config.js";
 import { renderPremium } from "./premium.js";
 import { safeText } from "./crypto.js";
-import { auth, db, fb, authReady } from "./firebase.js";
 const $=s=>document.querySelector(s);
 const products=[
 {id:"p1",name:"The Sculpted Blazer",category:"Tops",price:4890,tag:"NEW",desc:"A softly structured blazer with a precise shoulder and an effortless drape.",image:"photo-1591047139829-d91aecb6caea"},
@@ -31,7 +30,7 @@ function route(name){document.querySelectorAll(".page").forEach(p=>p.hidden=true
 function renderShop(){let list=products.filter(p=>(category==="All"||p.category===category)&&(`${p.name} ${p.category}`.toLowerCase().includes(searchTerm.toLowerCase())));const sort=$("#sortSelect").value;if(sort==="low")list.sort((a,b)=>a.price-b.price);if(sort==="high")list.sort((a,b)=>b.price-a.price);if(sort==="name")list.sort((a,b)=>a.name.localeCompare(b.name));renderProducts("#shopGrid",list);$("#filterChips").innerHTML=["All",...cats.map(c=>c[0])].map(c=>`<button class="filter-chip ${c===category?"active":""}" data-filter="${c}">${c}</button>`).join("");}
 function renderBag(){const host=$("#bagContents");if(!bag.length){host.innerHTML='<div class="chat-empty"><h2>Your bag is taking a breath.</h2><p>Explore the collection and find something lovely.</p><button class="btn btn-dark" data-route="shop">Explore the collection</button></div>';return;}let total=bag.reduce((s,x)=>s+products.find(p=>p.id===x.id).price*x.qty,0);host.innerHTML=`<div class="bag-items">${bag.map(x=>{const p=products.find(p=>p.id===x.id);return `<div class="bag-item"><img src="${img(p.image,300)}" alt=""><div><h3>${safeText(p.name)}</h3><p>Size ${x.size} · ${money(p.price)}</p><div class="qty"><button data-qty="${x.id}|${x.size}|-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${x.id}|${x.size}|1" aria-label="Increase quantity">+</button></div><button data-remove="${x.id}|${x.size}">Remove</button></div><strong>${money(p.price*x.qty)}</strong></div>`}).join("")}</div><aside class="bag-summary"><h2>Order summary</h2><div class="summary-line"><span>Subtotal</span><span>${money(total)}</span></div><div class="summary-line"><span>Shipping</span><span>Complimentary</span></div><div class="summary-line"><strong>Total</strong><strong>${money(total)}</strong></div><button id="checkoutFake" class="btn btn-dark">Continue to checkout ↗</button><p style="font-size:10px;color:#766b5e;line-height:1.7">This demo checkout does not process payments.</p></aside>`;}
 function showProduct(id){const p=products.find(p=>p.id===id);if(!p)return;activeProduct=p;activeSize="M";activeColor="#b8a18a";$("#productDetail").innerHTML=`<div class="detail-layout"><img src="${img(p.image,1000)}" alt="${safeText(p.name)}"><div class="detail-copy"><p class="eyebrow">${safeText(p.category)} · THE VELORA EDIT</p><h2>${safeText(p.name)}</h2><p class="detail-price">${money(p.price)}</p><p>${safeText(p.desc)}</p><p class="eyebrow" style="margin-top:25px">SELECT SIZE</p><div class="size-row">${["XS","S","M","L","XL"].map(s=>`<button class="size-btn ${s===activeSize?"active":""}" data-size="${s}">${s}</button>`).join("")}</div><p class="eyebrow">COLOUR STORY</p><div class="color-row">${["#b8a18a","#282321","#e4d8c8"].map(c=>`<button class="swatch ${c===activeColor?"active":""}" data-color="${c}" style="background:${c}" aria-label="Select colour"></button>`).join("")}</div><button class="btn btn-dark" id="addToBag">Add to bag · ${money(p.price)}</button><button class="btn btn-outline" id="detailWishlist">${wishlist.includes(p.id)?"♥ Saved to wishlist":"♡ Add to wishlist"}</button></div></div>`;$("#productDialog").showModal();}
-function openPremium(){renderPremium({onClose:()=>{$("#premiumView").hidden=true;$("#app").hidden=false;},onUnlock:async()=>{await authReady;if(auth.currentUser){const user=auth.currentUser;try{const snap=await fb.get(fb.ref(db,`users/${user.uid}/username`));if(snap.exists()){const m=await import("./chat.js");await m.openChat(user);}else{const m=await import("./profile.js");m.openProfile(user);}}catch(err){console.error(err);const m=await import("./auth.js");m.openAuth();}}else{const m=await import("./auth.js");m.openAuth();}}});$("#app").hidden=true;$("#premiumView").hidden=false;}
+function openPremium(){renderPremium({onClose:()=>{$("#premiumView").hidden=true;$("#app").hidden=false;},onUnlock:()=>{import("./auth.js").then(m=>m.openAuth());}});$("#app").hidden=true;$("#premiumView").hidden=false;}
 document.addEventListener("click",e=>{const r=e.target.closest("[data-route]");if(r){e.preventDefault();route(r.dataset.route);return;}const p=e.target.closest("[data-product]");if(p&&!e.target.closest("[data-heart]")){showProduct(p.dataset.product);return;}const h=e.target.closest("[data-heart]");if(h){const id=h.dataset.heart;wishlist=wishlist.includes(id)?wishlist.filter(x=>x!==id):[...wishlist,id];save();h.classList.toggle("saved",wishlist.includes(id));h.textContent=wishlist.includes(id)?"♥":"♡";if(!$("#wishlistPage").hidden)renderProducts("#wishlistGrid",products.filter(p=>wishlist.includes(p.id)));return;}const f=e.target.closest("[data-filter]");if(f){category=f.dataset.filter;renderShop();return;}const s=e.target.closest("[data-size]");if(s){activeSize=s.dataset.size;document.querySelectorAll("[data-size]").forEach(b=>b.classList.toggle("active",b===s));return;}const c=e.target.closest("[data-color]");if(c){activeColor=c.dataset.color;document.querySelectorAll("[data-color]").forEach(b=>b.classList.toggle("active",b===c));return;}const q=e.target.closest("[data-qty]");if(q){const [id,size,delta]=q.dataset.qty.split("|");const item=bag.find(x=>x.id===id&&x.size===size);item.qty+=Number(delta);if(item.qty<=0)bag=bag.filter(x=>x!==item);save();renderBag();return;}const rem=e.target.closest("[data-remove]");if(rem){const [id,size]=rem.dataset.remove.split("|");bag=bag.filter(x=>!(x.id===id&&x.size===size));save();renderBag();return;}if(e.target.id==="addToBag"&&activeProduct){const found=bag.find(x=>x.id===activeProduct.id&&x.size===activeSize);if(found)found.qty++;else bag.push({id:activeProduct.id,size:activeSize,qty:1,color:activeColor});save();$("#productDialog").close();toast("Added to your bag.");return;}if(e.target.id==="detailWishlist"&&activeProduct){const id=activeProduct.id;wishlist=wishlist.includes(id)?wishlist.filter(x=>x!==id):[...wishlist,id];save();e.target.textContent=wishlist.includes(id)?"♥ Saved to wishlist":"♡ Add to wishlist";return;}if(e.target.id==="checkoutFake"){toast("Checkout is a demo and no payment was taken.");return;}if(e.target.id==="premiumOpen"||e.target.closest("#premiumOpen"))openPremium();});
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-product]")){e.preventDefault();showProduct(e.target.dataset.product);}});
 $("#closeProduct").addEventListener("click",()=>$("#productDialog").close());
@@ -47,27 +46,4 @@ renderProducts("#newArrivals",products.slice(0,4));renderProducts("#trendingGrid
 $("#versionLabel").textContent="v"+CONFIG.APP_VERSION;
 window.addEventListener("velora:show-store",()=>{document.querySelectorAll(".overlay-view").forEach(x=>x.hidden=true);$("#app").hidden=false;route("home");document.title="Velora — The Art of Dressing";});
 window.velora={route,toast,openPremium,products};
-setTimeout(async()=>{
-  $("#splash").style.opacity="0";
-  setTimeout(()=>$("#splash")?.remove(),450);
-  // Preserve the active private-chat route through refreshes and PWA updates.
-  let resumed = false;
-  try {
-    await authReady;
-    if (sessionStorage.getItem("velora-chat-active") === "1" && auth.currentUser) {
-      const user = auth.currentUser;
-      const profile = await fb.get(fb.ref(db, `users/${user.uid}/username`));
-      if (profile.exists()) {
-        const { openChat } = await import("./chat.js");
-        await openChat(user);
-      } else {
-        const { openProfile } = await import("./profile.js");
-        openProfile(user);
-      }
-      resumed = true;
-    } else if (sessionStorage.getItem("velora-chat-active") === "1" && !auth.currentUser) {
-      sessionStorage.removeItem("velora-chat-active");
-    }
-  } catch (error) { console.warn("Could not restore the last private session:", error); }
-  if (!resumed) $("#app").hidden=false;
-},650);
+setTimeout(()=>{$("#splash").style.opacity="0";setTimeout(()=>{$("#splash").remove();$("#app").hidden=false;},450);},650);
