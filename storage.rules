@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    // Keep uploads private to authenticated users; apply the same allowed-domain policy
+    // as the database using a regex that you customize to your chosen suffix.
+    function allowedMember() {
+      return signedIn() && request.auth.token.email.matches('.*@your-approved-domain[.]example');
+    }
+    match /media/{uid}/{allPaths=**} {
+      allow read, write: if allowedMember() && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}
