@@ -1415,3 +1415,9 @@ body{background:radial-gradient(ellipse at 50% -25%,#1a1727 0,#090a10 52%) fixed
 .qty button{background:#171821;border:1px solid #30313d;color:#f1f1f5}
 .newsletter{background:linear-gradient(145deg,#15131f,#0d0e14)!important}
 @media(max-width:767px){.site-header{border-bottom-color:#252630!important}.mobile-nav{box-shadow:0 -10px 40px rgba(0,0,0,.35)}.hero{background:#090a10!important}}
+
+
+/* v1.2.1: the homepage opens directly on the campaign poster, without hero copy. */
+.hero.hero-poster { display:block!important; position:relative; width:100%; height:clamp(430px,72vh,820px); min-height:430px; overflow:hidden; padding:0!important; margin:0 auto; background:#090a10!important; border:0!important; }
+.hero-poster>img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 28%; }
+@media(max-width:767px){.hero.hero-poster{height:clamp(420px,68svh,700px);min-height:420px}.hero-poster>img{object-position:center top}}
