@@ -5,7 +5,7 @@ export const CONFIG = Object.freeze({
   LOCKOUT_SECONDS: 60,
   REMEMBER_UNLOCK_FOR_SESSION: true,
   AUTH_PERSISTENCE: "session",
-  ALLOWED_EMAIL_SUFFIX: "_____________velora@app.com",
+  ALLOWED_EMAIL_SUFFIX: "@gmail.com",
   DISGUISE_BUTTON_LABEL: "Collections",
   DISGUISE_BUTTON_ICON: "◇",
   UPDATE_POLL_SECONDS: 60,
