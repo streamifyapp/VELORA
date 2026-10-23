@@ -7,5 +7,6 @@ import { CONFIG } from "./config.js";
 export const app=initializeApp(CONFIG.FIREBASE);
 export const auth=getAuth(app); export const db=getDatabase(app); export const storage=getStorage(app);
 export const fb={ref,get,set,update,remove,push,onValue,onChildAdded,query,orderByKey,limitToLast,runTransaction,serverTimestamp,onDisconnect,storageRef,uploadBytes,getDownloadURL,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,setPersistence,browserLocalPersistence,browserSessionPersistence};
-setPersistence(auth,CONFIG.AUTH_PERSISTENCE==="local"?browserLocalPersistence:browserSessionPersistence).catch(console.warn);
+// Resolve persistence before allowing sign-in/sign-up so a fast submit cannot race it.
+export const persistenceReady=setPersistence(auth,CONFIG.AUTH_PERSISTENCE==="local"?browserLocalPersistence:browserSessionPersistence).catch(err=>{console.warn("Auth persistence setup failed",err);});
 isSupported().then(ok=>ok&&getAnalytics(app)).catch(()=>{});
