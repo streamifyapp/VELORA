@@ -1,4 +1,4 @@
-const CACHE_NAME="velora-v1.1.0";
+const CACHE_NAME="velora-v1.2.0";
 const APP_SHELL=["./","./index.html","./manifest.webmanifest","./version.json","./offline.html","./css/style.css","./css/premium.css","./css/chat.css","./js/config.js","./js/crypto.js","./js/firebase.js","./js/updater.js","./js/store.js","./js/premium.js","./js/secret.js","./js/auth.js","./js/profile.js","./js/friends.js","./js/chat.js","./icons/logo.svg","./icons/logo-mark.svg","./icons/logo-wordmark.svg","./icons/logo-mono.svg","./icons/maskable.svg","./icons/icon-192.png","./icons/icon-512.png"];
 self.addEventListener("install",event=>{event.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);await c.addAll(APP_SHELL.map(x=>new Request(x,{cache:"reload"})).filter(Boolean).map(asyncReq=>asyncReq).filter(Boolean).map(x=>x).filter(Boolean).map(x=>x));await self.skipWaiting();})().catch(()=>self.skipWaiting()));});
 self.addEventListener("activate",event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key!==CACHE_NAME)await caches.delete(key);await self.clients.claim();})());});
