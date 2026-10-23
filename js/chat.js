@@ -1,129 +1,18 @@
-import { auth, db, fb } from "./firebase.js";
-import { safeText, encodeEmail } from "./crypto.js";
-import { findPerson, sendRequest, answerRequest, blockUser } from "./friends.js";
-import { backToStore } from "./secret.js";
-const $ = s => document.querySelector(s);
-let currentUser = null, activeFriend = null, unsubscribeMessages = null, unsubscribeRequests = null, friendCache = [], activeTab = "friends";
-const chatIdFor = friend => [currentUser.uid, friend.uid].sort().join("_");
-const initials = p => safeText(String((p?.displayName || p?.username || "V").trim()[0] || "V").toUpperCase());
-function errText(err) { console.error(err); const code = String(err?.code || ""); const msg = String(err?.message || ""); if (code.includes("PERMISSION_DENIED") || msg.includes("PERMISSION_DENIED") || msg.toLowerCase().includes("permission_denied")) return "Firebase blocked this action. Publish the updated database.rules.json rules in Realtime Database → Rules."; if (!navigator.onLine) return "You appear to be offline. Reconnect and try again."; return msg || "Something went wrong. Check your connection and Firebase rules."; }
-export async function openChat(user) {
-  if (!user) return;
-  currentUser = user; activeFriend = null; activeTab = "friends";
-  document.body.dataset.route = "chat";
-  try { sessionStorage.setItem("velora-chat-active", "1"); } catch {}
-  if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
-  if (unsubscribeRequests) { unsubscribeRequests(); unsubscribeRequests = null; }
-  const host = $("#chatView"); host.hidden = false; $("#premiumView").hidden = true; $("#app").hidden = true;
-  document.title = "Messages · Velora";
-  host.innerHTML = `<div class="chat-shell" id="chatShell"><aside class="chat-sidebar"><div class="chat-brandbar"><div class="chat-brand"><span class="chat-brand-icon">V</span><span><strong>velora</strong><small>PRIVATE MESSAGES</small></span></div><button class="chat-icon-button" id="storeBack" title="Back to store" aria-label="Back to store">↗</button></div><div class="chat-sidebar-title"><div><p class="chat-kicker">YOUR SPACE</p><h1>Messages<span class="live-dot"></span></h1></div><button id="newMessage" class="new-message" title="Find people">＋</button></div><label class="chat-search"><span>⌕</span><input id="friendSearch" placeholder="Search people…" aria-label="Search friends"></label><div class="chat-tabs"><button class="active" data-tab="friends">Chats</button><button data-tab="requests">Requests <span id="requestCount" class="request-count"></span></button><button data-tab="find">Discover</button></div><div class="friend-list" id="friendList"><div class="chat-loading"><span class="loading-orb"></span><p>Loading your conversations…</p></div></div><div class="chat-account"><div class="avatar account-avatar">${initials({displayName:user.displayName||user.email})}</div><div class="account-meta"><strong>${safeText(user.displayName || user.email || "Your account")}</strong><small>${safeText(user.email || "Signed in")}</small></div><button id="chatSettings" class="chat-icon-button" aria-label="Account settings">···</button></div></aside><section class="chat-main" id="chatMain"><div class="chat-welcome"><div class="welcome-orbit"><div class="welcome-mark">V</div><span class="orbit-dot one"></span><span class="orbit-dot two"></span><span class="orbit-dot three"></span></div><p class="chat-kicker">A LITTLE SPACE OF YOUR OWN</p><h2>Good conversations<br><span>start here.</span></h2><p>Choose a conversation or find someone new to connect with.</p><button class="chat-primary welcome-action" id="welcomeDiscover">Discover people <span>↗</span></button><div class="welcome-foot"><span class="live-dot"></span> Your private space is ready</div></div></section></div>`;
-  $("#storeBack").onclick = backToStore; $("#newMessage").onclick = () => switchTab("find"); $("#welcomeDiscover").onclick = () => switchTab("find");
-  host.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
-  $("#friendSearch").addEventListener("input", e => filterFriends(e.target.value));
-  $("#friendSearch").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.value.trim()) { switchTab("find"); const field = $("#findInput"); if (field) { field.value = e.target.value.trim(); doFind(); } } });
-  $("#chatSettings").onclick = showSettings;
-  await ensurePublicProfile(user);
-  await loadFriends();
-  listenRequests();
-}
-async function ensurePublicProfile(user) {
-  try {
-    const privateSnap = await fb.get(fb.ref(db, `users/${user.uid}`));
-    const privateProfile = privateSnap.val() || {};
-    if (privateProfile.username) {
-      const username = String(privateProfile.username).trim().toLowerCase().replace(/^@/, "");
-      // Refresh each public lookup record independently so one failed write doesn't skip the others.
-      await fb.set(fb.ref(db, `publicProfiles/${user.uid}`), { username, displayName: privateProfile.displayName || username, avatarColor: privateProfile.avatarColor || "#8b7cff" }).catch(err => console.warn("Public profile could not be refreshed:", err));
-      await fb.set(fb.ref(db, `usernames/${username}`), user.uid).catch(err => console.warn("Username search index could not be refreshed:", err));
-      if (user.email) await fb.set(fb.ref(db, `emailIndex/${encodeEmail(user.email)}`), user.uid).catch(err => console.warn("Email search index could not be refreshed:", err));
-    }
-  } catch (err) { console.warn("Could not refresh public profile:", err); }
-}
-function switchTab(tab) {
-  activeTab = tab; document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-  $("#friendSearch").value = "";
-  if (tab === "find") {
-    $("#friendList").innerHTML = `<div class="discover-panel"><p class="chat-kicker">EXPAND YOUR CIRCLE</p><h2>Find your people.</h2><p>Search with an exact username or full email address.</p><form class="find-box" id="findForm"><span>⌕</span><input id="findInput" placeholder="@username or name@gmail.com" autocomplete="off" required><button type="submit" aria-label="Search">↗</button></form><div id="findResult" class="find-result"></div></div>`;
-    $("#findForm").onsubmit = e => { e.preventDefault(); doFind(); }; $("#findInput").focus();
-  } else if (tab === "requests") loadRequests(); else loadFriends();
-}
-async function doFind() {
-  const input = $("#findInput"), out = $("#findResult"); if (!input || !out) return;
-  const term = input.value.trim(); if (!term) { out.innerHTML = `<p class="inline-note">Enter a username or full email address.</p>`; return; }
-  out.innerHTML = `<div class="chat-loading compact"><span class="loading-orb"></span><p>Searching…</p></div>`;
-  try {
-    const person = await findPerson(term, currentUser.uid);
-    if (!person) { out.innerHTML = `<div class="no-results"><span>⌕</span><strong>No exact match found</strong><p>Use their exact username (with or without @) or full email address. If this is an older account, ask them to sign in once to refresh their search profile.</p></div>`; return; }
-    const existing = await fb.get(fb.ref(db, `friends/${currentUser.uid}/${person.uid}`));
-    const outgoing = await fb.get(fb.ref(db, `outgoingRequests/${currentUser.uid}/${person.uid}`));
-    const incoming = await fb.get(fb.ref(db, `friendRequests/${currentUser.uid}/${person.uid}`));
-    let label = existing.exists() ? "Already connected" : outgoing.exists() ? "Request sent" : incoming.exists() ? "Accept their request in Requests" : "Add friend";
-    out.innerHTML = `<article class="discover-result"><div class="avatar large-avatar" style="background:${safeText(person.avatarColor || "#635bff")}">${initials(person)}</div><div class="discover-person"><strong>${safeText(person.displayName || person.username)}</strong><small>@${safeText(person.username || "member")}</small></div><button class="chat-primary add-friend-button" id="sendFriend" ${label !== "Add friend" ? "disabled" : ""}>${label}</button></article>${person._profilePending ? `<p class="inline-note">This older account can be found, but its public profile will finish syncing when they next sign in.</p>` : ""}<p class="inline-note" id="findStatus" role="status"></p>`;
-    $("#sendFriend").onclick = async () => { const button = $("#sendFriend"), status = $("#findStatus"); button.disabled = true; button.textContent = "Sending…"; status.textContent = ""; try { await sendRequest(currentUser.uid, person.uid); button.textContent = "Request sent ✓"; status.textContent = "Your friend request has been sent."; } catch (err) { button.disabled = false; button.textContent = "Add friend"; status.textContent = errText(err); } };
-  } catch (err) { out.innerHTML = `<div class="error-panel"><strong>Search could not finish</strong><p>${safeText(errText(err))}</p><small>Publish the included database.rules.json in Firebase Realtime Database → Rules. Also confirm the other account has completed profile setup.</small></div>`; }
-}
-async function loadFriends() {
-  const host = $("#friendList"); if (!host || !currentUser) return;
-  host.innerHTML = `<div class="chat-loading"><span class="loading-orb"></span><p>Loading chats…</p></div>`;
-  try {
-    const snap = await fb.get(fb.ref(db, `friends/${currentUser.uid}`)); const ids = Object.keys(snap.val() || {});
-    if (!ids.length) { host.innerHTML = `<div class="empty-list"><div class="empty-icon">✳</div><strong>No conversations yet</strong><p>Your circle starts with one connection.</p><button id="emptyDiscover" class="chat-secondary">Find people ↗</button></div>`; $("#emptyDiscover").onclick = () => switchTab("find"); friendCache = []; return; }
-    const people = await Promise.all(ids.map(async uid => { const ps = await fb.get(fb.ref(db, `publicProfiles/${uid}`)); return ps.exists() ? { uid, ...ps.val() } : null; }));
-    friendCache = people.filter(Boolean);
-    if (!friendCache.length) { host.innerHTML = `<div class="empty-list"><strong>Profiles need refreshing</strong><p>Ask your friend to sign in once, then refresh.</p></div>`; return; }
-    renderFriendRows(friendCache);
-  } catch (err) { host.innerHTML = `<div class="error-panel"><strong>Couldn't load chats</strong><p>${safeText(errText(err))}</p></div>`; }
-}
-function renderFriendRows(list) {
-  const host = $("#friendList"); if (!host) return;
-  host.innerHTML = list.map(person => `<button type="button" class="friend-row ${activeFriend?.uid === person.uid ? "active" : ""}" data-friend="${safeText(person.uid)}"><span class="avatar" style="background:${safeText(person.avatarColor || "#635bff")}">${initials(person)}</span><span class="friend-meta"><strong>${safeText(person.displayName || person.username)}</strong><small>@${safeText(person.username || "member")}</small></span><span class="friend-row-arrow">›</span></button>`).join("") || `<div class="empty-list"><strong>No matches</strong><p>Try another name.</p></div>`;
-  host.querySelectorAll("[data-friend]").forEach(el => el.onclick = () => { const person = friendCache.find(x => x.uid === el.dataset.friend); if (person) openConversation(person); });
-}
-function filterFriends(term) { if (activeTab !== "friends") return; const t = term.trim().toLowerCase(); renderFriendRows(friendCache.filter(p => `${p.displayName || ""} ${p.username || ""}`.toLowerCase().includes(t))); }
-function listenRequests() {
-  if (unsubscribeRequests) unsubscribeRequests();
-  unsubscribeRequests = fb.onValue(fb.ref(db, `friendRequests/${currentUser.uid}`), snap => {
-    const count = Object.keys(snap.val() || {}).length; const badge = $("#requestCount"); if (badge) { badge.textContent = count ? String(count) : ""; badge.classList.toggle("has-count", count > 0); }
-    const reqTab = document.querySelector('[data-tab="requests"]'); if (reqTab) reqTab.classList.toggle("has-notifications", count > 0);
-    if (activeTab === "requests") loadRequests();
-  }, err => { console.error("Request listener failed:", err); });
-}
-async function loadRequests() {
-  const host = $("#friendList"); if (!host) return; host.innerHTML = `<div class="chat-loading"><span class="loading-orb"></span><p>Checking requests…</p></div>`;
-  try {
-    const snap = await fb.get(fb.ref(db, `friendRequests/${currentUser.uid}`)); const requests = Object.values(snap.val() || {});
-    if (!requests.length) { host.innerHTML = `<div class="empty-list"><div class="empty-icon">✳</div><strong>You're all caught up</strong><p>New friend requests will appear here.</p></div>`; return; }
-    const items = await Promise.all(requests.map(async request => { const ps = await fb.get(fb.ref(db, `publicProfiles/${request.from}`)); return { request, person: ps.val() || { username: "member", displayName: "Velora member" } }; }));
-    host.innerHTML = items.map(({request,person}) => `<article class="request-row"><div class="avatar" style="background:${safeText(person.avatarColor || "#635bff")}">${initials(person)}</div><div class="friend-meta"><strong>${safeText(person.displayName || person.username)}</strong><small>@${safeText(person.username || "member")}</small><small class="request-label">Wants to connect</small></div><div class="request-actions"><button class="accept-request" data-accept="${safeText(request.from)}">Accept</button><button class="decline-request" data-decline="${safeText(request.from)}" aria-label="Decline request">×</button></div></article>`).join("");
-    host.querySelectorAll("[data-accept]").forEach(button => button.onclick = async () => { button.disabled = true; try { await answerRequest(currentUser.uid, button.dataset.accept, true); await loadFriends(); } catch (err) { alert(errText(err)); button.disabled = false; } });
-    host.querySelectorAll("[data-decline]").forEach(button => button.onclick = async () => { button.disabled = true; try { await answerRequest(currentUser.uid, button.dataset.decline, false); await loadRequests(); } catch (err) { alert(errText(err)); button.disabled = false; } });
-  } catch (err) { host.innerHTML = `<div class="error-panel"><strong>Couldn't load requests</strong><p>${safeText(errText(err))}</p></div>`; }
-}
-async function openConversation(friend) {
-  activeFriend = friend; const shell = $("#chatShell"), chatId = chatIdFor(friend); shell.classList.add("conversation-open");
-  if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
-  $("#chatMain").innerHTML = `<div class="conversation-header"><button class="mobile-chat-back" id="conversationBack" aria-label="Back to chats">‹</button><div class="avatar" style="background:${safeText(friend.avatarColor || "#635bff")}">${initials(friend)}</div><div class="conversation-person"><strong>${safeText(friend.displayName || friend.username)}</strong><small><span class="online-dot"></span>@${safeText(friend.username || "member")}</small></div><button id="friendOptions" class="chat-icon-button" aria-label="Conversation options">···</button></div><div class="conversation-body" id="messageList"><div class="chat-loading"><span class="loading-orb"></span><p>Loading messages…</p></div></div><form class="chat-compose" id="compose"><textarea id="messageDraft" rows="1" maxlength="5000" placeholder="Write a message…" aria-label="Message"></textarea><button type="submit" aria-label="Send message">↑</button><small>Enter to send · Shift + Enter for a new line</small></form>`;
-  $("#conversationBack").onclick = () => shell.classList.remove("conversation-open"); $("#friendOptions").onclick = () => showFriendOptions(friend);
-  try { await fb.set(fb.ref(db, `chats/${chatId}/members/${currentUser.uid}`), true); } catch (err) { console.warn("Could not initialize chat membership:", err); }
-  const body = $("#messageList"); body.innerHTML = ""; let gotMessage = false;
-  const messageRef = fb.query(fb.ref(db, `chats/${chatId}/messages`), fb.orderByKey(), fb.limitToLast(100));
-  unsubscribeMessages = fb.onChildAdded(messageRef, snap => {
-    gotMessage = true; const msg = snap.val() || {}; if (body.querySelector(`[data-message="${CSS.escape(snap.key)}"]`)) return;
-    const row = document.createElement("div"); row.className = `message ${msg.sender === currentUser.uid ? "mine" : "theirs"}`; row.dataset.message = snap.key;
-    const content = document.createElement("div"); content.className = "message-text"; content.textContent = msg.text || ""; row.append(content);
-    const time = document.createElement("time"); time.textContent = new Date(Number(msg.createdAt) || Date.now()).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); row.append(time); body.append(row); body.scrollTop = body.scrollHeight;
-  }, err => { body.innerHTML = `<div class="error-panel"><strong>Messages are unavailable</strong><p>${safeText(errText(err))}</p><small>Confirm both users accepted the friend request and the database rules are published.</small></div>`; });
-  setTimeout(() => { if (!gotMessage && body.childElementCount === 0) body.innerHTML = `<div class="conversation-start"><span>✦</span><strong>This is the beginning.</strong><p>Say hello to ${safeText(friend.displayName || friend.username)}.</p></div>`; }, 700);
-  $("#compose").onsubmit = async e => { e.preventDefault(); const input = $("#messageDraft"), text = input.value.trim(); if (!text) return; const submit = e.currentTarget.querySelector("button[type=submit]"); submit.disabled = true;
-    try { await fb.push(fb.ref(db, `chats/${chatId}/messages`), { sender: currentUser.uid, text, createdAt: Date.now(), type: "text" }); input.value = ""; input.style.height = "auto"; }
-    catch (err) { alert(`Message not sent. ${errText(err)}`); } finally { submit.disabled = false; input.focus(); }
-  };
-  $("#messageDraft").addEventListener("input", e => { e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 130)}px`; });
-  $("#messageDraft").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#compose").requestSubmit(); } });
-}
-async function showFriendOptions(friend) { const action = prompt("Type BLOCK to block this person, or CANCEL to close."); if (action?.toUpperCase() === "BLOCK") { try { await blockUser(currentUser.uid, friend.uid); activeFriend = null; $("#chatShell").classList.remove("conversation-open"); await loadFriends(); } catch (err) { alert(errText(err)); } } }
-function showSettings() {
-  const host = $("#friendList"); host.innerHTML = `<div class="settings-panel"><p class="chat-kicker">ACCOUNT</p><h2>Your settings</h2><p class="settings-email">${safeText(currentUser.email || "Signed in")}</p><button id="backFriends" class="chat-secondary">Back to chats</button><button id="signOut" class="chat-danger">Sign out</button></div>`;
-  $("#signOut").onclick = async () => { try { if (unsubscribeMessages) unsubscribeMessages(); if (unsubscribeRequests) unsubscribeRequests(); await fb.signOut(auth); backToStore(); } catch (err) { alert(errText(err)); } };
-  $("#backFriends").onclick = loadFriends;
-}
+import {auth,db,fb} from "./firebase.js";
+import {safeText} from "./crypto.js";
+import {findPerson,sendRequest,answerRequest,blockUser} from "./friends.js";
+import {CONFIG} from "./config.js";
+import {backToStore} from "./secret.js";
+const $=s=>document.querySelector(s);let currentUser=null,activeFriend=null,unsub=null,friendCache=[],activeTab="friends";
+export async function openChat(user){currentUser=user;const host=$("#chatView");host.hidden=false;host.innerHTML=`<div class="chat-shell" id="chatShell"><aside class="chat-sidebar"><div class="chat-brandbar"><img src="icons/logo-wordmark.svg" alt="Velora"><button id="storeBack">${safeText(CONFIG.DISGUISE_BUTTON_LABEL)}</button></div><div class="chat-search"><input id="friendSearch" placeholder="Find a person by username or email" aria-label="Find a person"></div><div class="chat-tabs"><button class="active" data-tab="friends">Friends</button><button data-tab="requests">Requests <span id="requestCount"></span></button><button data-tab="find">Find people</button></div><div class="friend-list" id="friendList"><div class="chat-empty">Loading your space…</div></div><div class="chat-settings"><button id="chatSettings">Settings</button><small>Signed in as ${safeText(user.email||"member")}</small></div></aside><section class="chat-main" id="chatMain"><div class="chat-landing"><div><div class="big-v">V</div><h2>A little space of your own.</h2><p>Select a friend to continue.</p></div></div></section></div>`;
+$("#storeBack").onclick=backToStore;document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));$("#friendSearch").addEventListener("keydown",e=>{if(e.key==="Enter")doFind();});$("#chatSettings").onclick=showSettings;await loadFriends();listenRequests();window.addEventListener("beforeunload",()=>unsub?.(),{once:true});}
+function switchTab(tab){activeTab=tab;document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));if(tab==="find"){$("#friendList").innerHTML=`<div class="find-box"><input id="findInput" placeholder="Exact username or full email"><button id="findButton">Search</button></div><div id="findResult"></div>`;$("#findButton").onclick=doFind;$("#findInput").addEventListener("keydown",e=>{if(e.key==="Enter")doFind();});}else if(tab==="requests")loadRequests();else loadFriends();}
+async function doFind(){const term=($("#findInput")||$("#friendSearch")).value.trim(),out=$("#findResult")||$("#friendList");out.innerHTML='<div class="chat-settings">Searching…</div>';try{const p=await findPerson(term,currentUser.uid);if(!p){out.innerHTML='<div class="chat-settings">No exact match found.</div>';return;}out.innerHTML=`<div class="friend-row"><div class="avatar">${safeText((p.displayName||p.username||"V")[0].toUpperCase())}</div><div class="friend-meta"><strong>${safeText(p.displayName||p.username)}</strong><small>@${safeText(p.username||"member")}</small></div><div class="request-actions"><button id="sendFriend">Add friend</button></div></div>`;$("#sendFriend").onclick=async()=>{try{await sendRequest(currentUser.uid,p.uid);out.querySelector("button").textContent="Request sent";out.querySelector("button").disabled=true;}catch(e){out.insertAdjacentHTML("beforeend",`<p class="chat-settings">${safeText(e.message)}</p>`);}};}catch{out.innerHTML='<div class="chat-settings">Could not search. Check your connection.</div>';}}
+async function loadFriends(){const host=$("#friendList");try{const s=await fb.get(fb.ref(db,`friends/${currentUser.uid}`));const ids=Object.keys(s.val()||{});if(!ids.length){host.innerHTML='<div class="chat-empty"><div class="big-v">V</div><p>Your circle starts here.</p><small>Use Find people to connect by exact username or email.</small></div>';return;}const people=await Promise.all(ids.map(async uid=>{const p=await fb.get(fb.ref(db,`users/${uid}`));return p.exists()?{uid,...p.val()}:null;}));friendCache=people.filter(Boolean);host.innerHTML=friendCache.map(p=>`<div class="friend-row" data-friend="${p.uid}"><div class="avatar" style="background:${safeText(p.avatarColor||"#66523a")}">${safeText((p.displayName||p.username||"V")[0].toUpperCase())}</div><div class="friend-meta"><strong>${safeText(p.displayName||p.username)}</strong><small>@${safeText(p.username||"member")}</small></div></div>`).join("");host.querySelectorAll("[data-friend]").forEach(el=>el.onclick=()=>openConversation(friendCache.find(p=>p.uid===el.dataset.friend)));}catch{host.innerHTML='<div class="chat-settings">Could not load your connections. Please check Firebase database rules.</div>';}}
+async function listenRequests(){try{fb.onValue(fb.ref(db,`friendRequests/${currentUser.uid}`),snap=>{$("#requestCount").textContent=Object.keys(snap.val()||{}).length||"";if(activeTab==="requests")loadRequests();});}catch{}}
+async function loadRequests(){const s=await fb.get(fb.ref(db,`friendRequests/${currentUser.uid}`));const reqs=Object.values(s.val()||{});if(!reqs.length){$("#friendList").innerHTML='<div class="chat-settings">No pending requests.</div>';return;}const html=[];for(const r of reqs){const p=await fb.get(fb.ref(db,`users/${r.from}`));const v=p.val()||{};html.push(`<div class="friend-row"><div class="avatar">${safeText((v.displayName||v.username||"V")[0].toUpperCase())}</div><div class="friend-meta"><strong>${safeText(v.displayName||v.username||"Member")}</strong><small>@${safeText(v.username||"member")}</small></div><div class="request-actions"><button data-accept="${r.from}">Accept</button><button data-decline="${r.from}">Decline</button></div></div>`);}$("#friendList").innerHTML=html.join("");$("#friendList").querySelectorAll("[data-accept]").forEach(b=>b.onclick=async()=>{await answerRequest(currentUser.uid,b.dataset.accept,true);await loadFriends();});$("#friendList").querySelectorAll("[data-decline]").forEach(b=>b.onclick=async()=>{await answerRequest(currentUser.uid,b.dataset.decline,false);loadRequests();});}
+async function openConversation(friend){activeFriend=friend;const shell=$("#chatShell");shell.classList.add("conversation-open");const chatId=[currentUser.uid,friend.uid].sort().join("_");$("#chatMain").innerHTML=`<div class="conversation-header"><button class="mobile-chat-back" id="conversationBack">←</button><div style="flex:1"><strong>${safeText(friend.displayName||friend.username)}</strong><small>@${safeText(friend.username||"member")}</small></div><button id="searchMessages" title="Search messages">⌕</button><button id="unfriend">Options</button></div><div class="conversation-body" id="messageList"><div class="chat-settings">Loading messages…</div></div><form class="chat-compose" id="compose"><button type="button" id="emojiToggle" class="emoji-toggle" aria-label="Add emoji" title="Add emoji">☺</button><textarea id="messageDraft" rows="1" maxlength="5000" placeholder="Message…  (Enter to send)" aria-label="Message"></textarea><button type="submit">Send ↗</button></form>`;$("#conversationBack").onclick=()=>shell.classList.remove("conversation-open");$("#unfriend").onclick=()=>showFriendOptions(friend);const body=$("#messageList");
+$("#searchMessages").onclick=()=>{const q=prompt("Search messages in this conversation:");if(q===null)return;const term=q.trim().toLowerCase();body.querySelectorAll(".message").forEach(m=>m.hidden=!!term&&!m.textContent.toLowerCase().includes(term));if(term&&!body.querySelector(".message:not([hidden])"))alert("No messages matched that search.");};
+$("#emojiToggle").onclick=()=>{let picker=document.getElementById("emojiPicker");if(picker){picker.remove();return;}picker=document.createElement("div");picker.id="emojiPicker";picker.className="emoji-picker";picker.innerHTML=["😊","😂","❤️","✨","🥹","😍","👍","🙏","🎉","🤍","👀","🌙"].map(x=>`<button type="button" aria-label="Insert ${x}">${x}</button>`).join("");$("#compose").before(picker);picker.querySelectorAll("button").forEach(b=>b.onclick=()=>{const draft=$("#messageDraft");draft.value+=b.textContent;draft.focus();picker.remove();});};const msgRef=fb.query(fb.ref(db,`chats/${chatId}/messages`),fb.orderByKey(),fb.limitToLast(80));if(unsub)unsub();const render=snap=>{if(!snap.exists())return;const m=snap.val();if(document.querySelector(`[data-message="${snap.key}"]`))return;const el=document.createElement("div");el.className="message"+(m.sender===currentUser.uid?" mine":"");el.dataset.message=snap.key;el.innerHTML=`${safeText(m.text||"")}<time>${new Date(m.createdAt||Date.now()).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</time>`;body.append(el);el.addEventListener("contextmenu",async e=>{e.preventDefault();try{await navigator.clipboard.writeText(m.text||"");const note=document.createElement("span");note.className="copied-note";note.textContent="Copied";el.append(note);setTimeout(()=>note.remove(),1200);}catch{}});body.scrollTop=body.scrollHeight;};body.innerHTML="";unsub=fb.onChildAdded(msgRef,render);$("#compose").onsubmit=async e=>{e.preventDefault();const input=$("#messageDraft"),text=input.value.trim();if(!text)return;input.value="";try{await fb.push(fb.ref(db,`chats/${chatId}/messages`),{sender:currentUser.uid,text,createdAt:Date.now(),type:"text"});}catch{input.value=text;alert("Could not send. Check your connection and friendship access.");}};$("#messageDraft").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,140)+"px";});$("#messageDraft").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("#compose").requestSubmit();}});}
+async function showFriendOptions(friend){const action=prompt("Type BLOCK to block this person, or CANCEL to close.");if(action?.toUpperCase()==="BLOCK"){await blockUser(currentUser.uid,friend.uid);activeFriend=null;$("#chatShell").classList.remove("conversation-open");loadFriends();}}
+function showSettings(){const host=$("#friendList");host.innerHTML=`<div class="chat-settings"><h3>Settings</h3><p>Signed in as ${safeText(currentUser.email||"member")}</p><button id="signOut">Sign out</button><button id="backFriends">Back to friends</button><button id="wipeData">Wipe my local session</button></div>`;$("#signOut").onclick=async()=>{await fb.signOut(auth);backToStore();sessionStorage.removeItem("velora-unlocked");};$("#backFriends").onclick=loadFriends;$("#wipeData").onclick=()=>{if(confirm("Clear local session and saved store preferences?")){sessionStorage.clear();localStorage.removeItem("velora-bag");localStorage.removeItem("velora-wishlist");backToStore();}};}
