@@ -53,14 +53,14 @@ async function doFind() {
   out.innerHTML = `<div class="chat-loading compact"><span class="loading-orb"></span><p>Searching…</p></div>`;
   try {
     const person = await findPerson(term, currentUser.uid);
-    if (!person) { out.innerHTML = `<div class="no-results"><span>⌕</span><strong>No exact match found</strong><p>Check the spelling or ask them for their exact username.</p></div>`; return; }
+    if (!person) { out.innerHTML = `<div class="no-results"><span>⌕</span><strong>No exact match found</strong><p>Use their exact username (with or without @) or full email address. If this is an older account, ask them to sign in once to refresh their search profile.</p></div>`; return; }
     const existing = await fb.get(fb.ref(db, `friends/${currentUser.uid}/${person.uid}`));
     const outgoing = await fb.get(fb.ref(db, `outgoingRequests/${currentUser.uid}/${person.uid}`));
     const incoming = await fb.get(fb.ref(db, `friendRequests/${currentUser.uid}/${person.uid}`));
     let label = existing.exists() ? "Already connected" : outgoing.exists() ? "Request sent" : incoming.exists() ? "Accept their request in Requests" : "Add friend";
-    out.innerHTML = `<article class="discover-result"><div class="avatar large-avatar" style="background:${safeText(person.avatarColor || "#635bff")}">${initials(person)}</div><div class="discover-person"><strong>${safeText(person.displayName || person.username)}</strong><small>@${safeText(person.username || "member")}</small></div><button class="chat-primary add-friend-button" id="sendFriend" ${label !== "Add friend" ? "disabled" : ""}>${label}</button></article><p class="inline-note" id="findStatus" role="status"></p>`;
+    out.innerHTML = `<article class="discover-result"><div class="avatar large-avatar" style="background:${safeText(person.avatarColor || "#635bff")}">${initials(person)}</div><div class="discover-person"><strong>${safeText(person.displayName || person.username)}</strong><small>@${safeText(person.username || "member")}</small></div><button class="chat-primary add-friend-button" id="sendFriend" ${label !== "Add friend" ? "disabled" : ""}>${label}</button></article>${person._profilePending ? `<p class="inline-note">This older account can be found, but its public profile will finish syncing when they next sign in.</p>` : ""}<p class="inline-note" id="findStatus" role="status"></p>`;
     $("#sendFriend").onclick = async () => { const button = $("#sendFriend"), status = $("#findStatus"); button.disabled = true; button.textContent = "Sending…"; status.textContent = ""; try { await sendRequest(currentUser.uid, person.uid); button.textContent = "Request sent ✓"; status.textContent = "Your friend request has been sent."; } catch (err) { button.disabled = false; button.textContent = "Add friend"; status.textContent = errText(err); } };
-  } catch (err) { out.innerHTML = `<div class="error-panel"><strong>Search could not finish</strong><p>${safeText(errText(err))}</p><small>Check that Firebase rules are published and both users have a profile.</small></div>`; }
+  } catch (err) { out.innerHTML = `<div class="error-panel"><strong>Search could not finish</strong><p>${safeText(errText(err))}</p><small>Publish the included database.rules.json in Firebase Realtime Database → Rules. Also confirm the other account has completed profile setup.</small></div>`; }
 }
 async function loadFriends() {
   const host = $("#friendList"); if (!host || !currentUser) return;
