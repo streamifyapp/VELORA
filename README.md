@@ -2,6 +2,14 @@
 
 A static, GitHub Pages-ready fashion storefront with a Firebase-powered private-membership area. This is a functional starter, not a security-audited messaging product. The shop, product modal, local bag/wishlist, membership mock checkout, referral hash gate, Firebase email auth, username claim, exact-match people search, friend requests and basic 1:1 text messaging are included. Voice notes, uploads, E2E encryption, message editing/reactions/read receipts, robust server-side domain enforcement and comprehensive abuse controls are **not implemented** in this starter and should not be represented as production-complete.
 
+## Latest update (v1.1.0)
+- Reworked the storefront, membership and private-chat surfaces into a consistent dark, app-like interface.
+- Moved referral-code entry above the plan cards for quicker access.
+- Removed automatic chat dismissal on window blur, tab visibility changes, double taps and Escape; chat now closes only through explicit navigation.
+- Firebase Auth now uses local persistence and sign-in/sign-up waits for persistence initialization. Referral unlock is remembered in local storage.
+- Added message search, an emoji picker, auto-growing composer, and right-click-to-copy for messages.
+- The membership checkout remains a non-payment demo; the chat app still requires Firebase rules and deployment testing.
+
 ## Plan and flow
 - **Files:** `index.html`, `css/`, `js/`, `icons/`, `sw.js`, `offline.html`, manifest/version metadata, Firebase rules and this README.
 - **Data:** `users/{uid}`, `usernames/{lowercaseName}`, `emailIndex/{encodedEmail}`, `friendRequests/{receiverUid}/{senderUid}`, `friends/{uid}/{otherUid}`, `chats/{sortedUidA_sortedUidB}/members` and `messages`, plus `presence`, `typing`, and `appMeta/version`.
@@ -10,7 +18,7 @@ A static, GitHub Pages-ready fashion storefront with a Firebase-powered private-
 
 ## Deploy to GitHub Pages
 1. Create a repository (or upload these files into the root of your repository). Keep all paths relative; this supports GitHub Pages project subfolders.
-2. In `js/config.js`, verify the Firebase config, set `ALLOWED_EMAIL_SUFFIX` to the suffix you will actually use, and choose session/local auth persistence.
+2. In `js/config.js`, verify the Firebase config, set `ALLOWED_EMAIL_SUFFIX` to the suffix you will actually use, and choose local/session auth persistence.
 3. Enable **Authentication → Sign-in method → Email/Password** in Firebase. Leave Email link disabled. Add your deployed GitHub Pages hostname under Authentication → Settings → Authorized domains.
 4. Create/enable Realtime Database and Storage. Review and publish `database.rules.json` in Realtime Database → Rules. Publish `storage.rules` in Storage → Rules after changing the allowed-domain regex to match your chosen suffix.
 5. Set the initial `appMeta/version` string to `1.0.0` in Realtime Database. The public read exception for this one version node is intentional; clients cannot write it.
@@ -27,7 +35,7 @@ A static, GitHub Pages-ready fashion storefront with a Firebase-powered private-
 1. Authentication → Sign-in method → Email/Password → Enable. Leave Email link off.
 2. Authentication → Settings → Authorized domains → add your GitHub Pages host (e.g. `yourname.github.io`).
 3. Realtime Database → Rules: paste and test `database.rules.json`. The `appMeta/version` node must be readable publicly and never client-writable.
-4. Storage → Rules: replace `your-approved-domain.example` in `storage.rules` with the domain pattern matching the email suffix you use. The default config suffix is deliberately a placeholder.
+4. Storage → Rules: replace `your-approved-domain.example` in `storage.rules` with the domain pattern matching the email suffix you use. The default client-side suffix filter is blank (all valid email addresses can proceed); enforce any desired domain restrictions in trusted server-side logic and Firebase rules.
 5. Authentication → Users → Add user can be used to create accounts manually. To restrict self-service sign-up, disable/limit account creation in your auth architecture; the web client currently exposes Create account, so remove that tab and enforce the policy with a trusted backend if you only want admin-created accounts.
 6. The email index and username index use Firebase keys, with `.` replaced by `,` in email keys. Test duplicate claims and account deletion cleanup.
 
