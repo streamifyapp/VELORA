@@ -1,12 +1,7 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true,
     "appMeta": {
-      "version": {
-        ".read": true,
-        ".write": true
-      }
+      "version": { ".read": true, ".write": false }
     },
     "users": {
       "$uid": {
@@ -14,40 +9,59 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "publicProfiles": {
+      ".read": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "!newData.exists() || (newData.hasChildren(['username','displayName']) && newData.child('username').isString() && newData.child('displayName').isString())"
+      }
+    },
     "usernames": {
       "$name": {
         ".read": "auth != null",
-        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))"
+        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && (!newData.exists() || newData.val() === auth.uid)))",
+        ".validate": "!newData.exists() || (newData.isString() && newData.val() === auth.uid)"
       }
     },
     "emailIndex": {
       "$email": {
         ".read": "auth != null",
-        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))"
+        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && (!newData.exists() || newData.val() === auth.uid)))",
+        ".validate": "!newData.exists() || (newData.isString() && newData.val() === auth.uid)"
       }
     },
     "friendRequests": {
       "$receiver": {
+        ".read": "auth != null && auth.uid === $receiver",
         "$sender": {
-          ".read": "auth != null && (auth.uid === $receiver || auth.uid === $sender)",
-          ".write": "auth != null && (auth.uid === $sender || (auth.uid === $receiver && !newData.exists()))"
+          ".write": "auth != null && ((auth.uid === $sender && newData.child('from').val() === auth.uid && newData.child('to').val() === $receiver && !data.exists() && !root.child('blocked').child($sender).child($receiver).exists() && !root.child('blocked').child($receiver).child($sender).exists()) || (auth.uid === $sender && !newData.exists()) || (auth.uid === $receiver && !newData.exists()))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['from','to','createdAt']) && newData.child('from').val() === $sender && newData.child('to').val() === $receiver && newData.child('createdAt').isNumber())"
+        }
+      }
+    },
+    "outgoingRequests": {
+      "$sender": {
+        ".read": "auth != null && auth.uid === $sender",
+        "$receiver": {
+          ".write": "auth != null && ((auth.uid === $sender && newData.child('from').val() === auth.uid && newData.child('to').val() === $receiver && !data.exists() && !root.child('blocked').child($sender).child($receiver).exists() && !root.child('blocked').child($receiver).child($sender).exists()) || (auth.uid === $sender && !newData.exists()) || (auth.uid === $receiver && !newData.exists()))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['from','to','createdAt']) && newData.child('from').val() === $sender && newData.child('to').val() === $receiver && newData.child('createdAt').isNumber())"
         }
       }
     },
     "friends": {
       "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
         "$other": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && (auth.uid === $uid || auth.uid === $other)"
+          ".write": "auth != null && ((auth.uid === $uid && newData.val() === true) || (auth.uid === $other && root.child('friendRequests').child($other).child($uid).exists() && newData.val() === true) || (auth.uid === $uid && !newData.exists()) || (auth.uid === $other && !newData.exists()))",
+          ".validate": "!newData.exists() || newData.val() === true"
         }
       }
     },
     "blocked": {
       "$uid": {
-        "$other": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid"
-        }
+        ".read": "auth != null && auth.uid === $uid",
+        "$other": { ".write": "auth != null && auth.uid === $uid", ".validate": "!newData.exists() || newData.val() === true" }
       }
     },
     "chats": {
@@ -56,13 +70,15 @@
         ".write": "auth != null && newData.child('members').child(auth.uid).val() === true",
         "members": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid"
+            ".write": "auth != null && auth.uid === $uid && root.child('friends').child(auth.uid).hasChildren()",
+            ".validate": "newData.val() === true"
           }
         },
         "messages": {
           "$messageId": {
             ".read": "auth != null && root.child('chats').child($chatId).child('members').child(auth.uid).val() === true",
-            ".write": "auth != null && root.child('chats').child($chatId).child('members').child(auth.uid).val() === true && newData.child('text').isString() && newData.child('text').val().length <= 5000"
+            ".write": "auth != null && root.child('chats').child($chatId).child('members').child(auth.uid).val() === true && newData.child('sender').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 5000",
+            ".validate": "!newData.exists() || (newData.hasChildren(['sender','text','createdAt']) && newData.child('createdAt').isNumber() && newData.child('type').val() === 'text')"
           }
         }
       }
