@@ -358,3 +358,49 @@
         animation: none;
     }
 }
+
+/* Noir premium palette */
+.premium-page { background:radial-gradient(ellipse at 50% 0,rgba(100,84,201,.16),transparent 38%),#08090b; color:#f4f4f8; }
+.premium-top img { filter:brightness(0) invert(1); }
+.premium-close { border-color:#343540; background:#111218; color:#f4f4f8; border-radius:12px; }
+.premium-hero .eyebrow,.premium-hero h1 em,.premium-lower .eyebrow { color:#b8adff; }
+.premium-hero p:not(.eyebrow),.premium-lower p,.premium-lower details p,.premium-note { color:#a2a3b1; }
+.plan-card { background:linear-gradient(155deg,#12131a,#0c0d11); border-color:#292a35; border-radius:20px; }
+.plan-card.featured { border-color:#8275e5; background:linear-gradient(155deg,rgba(119,104,229,.17),#0d0e13 68%); box-shadow:0 20px 70px rgba(74,62,158,.13); }
+.plan-ribbon { background:#a89cff; color:#0b0a12; border-radius:0 18px 0 12px; }
+.plan-card h2,.plan-price { color:#f4f4f8; }
+.plan-card ul { color:#c0c0ce; }
+.plan-card li::marker { color:#a89cff; }
+.plan-card .btn,.referral-form button { background:#a89cff; color:#0b0a12; border:1px solid #a89cff; border-radius:10px; }
+.referral-wrap { color:#c7c4e2; }
+.referral-link { color:#b8adff; }
+.referral-form input,.fake-checkout input { background:#111218; color:#f4f4f8; border:1px solid #343540; border-radius:10px; }
+.premium-lower section { background:#0e0f14; border:1px solid #282933; border-radius:18px; padding:28px; }
+.premium-lower details { border-color:#292a35; }
+.fake-checkout .checkout-card { background:#111218; border:1px solid #343540; color:#f4f4f8; border-radius:20px; }
+
+
+/* Obsidian premium-membership palette */
+.premium-page { background: radial-gradient(ellipse at 50% 0, #171421 0, #090a0e 52%, #050507 100%); color: #f4f3f8; }
+.premium-close { border-color: #373342; color: #eeeaf9; }
+.premium-hero .eyebrow, .premium-hero h1 em { color: #c1b0ff; }
+.premium-hero p:not(.eyebrow), .plan-card ul, .plan-price small { color: #a6a5b3; }
+.plan-card { background: rgba(255,255,255,.025); border-color: #2d2b38; }
+.plan-card.featured { border-color: #8774bd; background: linear-gradient(150deg,rgba(153,127,229,.13),rgba(255,255,255,.018)); }
+.plan-ribbon { background: #c1b0ff; color: #0b0911; }
+.plan-card .btn { border-color: #62537e; color: #e5dcff; }
+.plan-card.featured .btn { background: #c1b0ff; color: #0b0911; }
+.premium-form input, .premium-page input { background: #111219; border-color: #343341; color: #f5f4fa; }
+.premium-page .btn-dark { background: #c1b0ff; border-color: #c1b0ff; color: #0b0911; }
+.referral-link { color: #c7b9ff; background: transparent; border-color: #514765; }
+.referral-form input { background: #111219; border: 1px solid #343341; color: #f5f4fa; }
+.referral-form button { background: #c1b0ff; color: #0b0911; border: 0; }
+.referral-error { color: #ff9daf; }
+.premium-lower { color: #c4c2d0; }
+.premium-lower h2, .premium-lower h2 em { color: #f1eff9; }
+.premium-lower details { border-color: #2c2b38; }
+.premium-lower summary { color: #e6e2f1; }
+.premium-note { color: #858595; }
+.fake-checkout { background: rgba(0,0,0,.75); }
+.checkout-card { background: #111219; border: 1px solid #383445; color: #f4f3f8; }
+.checkout-card input { background: #08090d; border: 1px solid #343341; color: #f4f3f8; }
