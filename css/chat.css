@@ -170,3 +170,15 @@
 .toast.show{animation:toastIn .45s cubic-bezier(.3,1.6,.5,1)}@keyframes toastIn{from{transform:translate(-50%,24px) scale(.8);opacity:0}}
 @media(max-width:760px){.chat-main{transition:transform .42s cubic-bezier(.22,1,.3,1)}}
 @media(prefers-reduced-motion:reduce){.friend-list.enter .friend-row,.message,.sheet-card,.sheet-card>button,.react-row button,.stk-i,.avatar .on,.online-strip button,.land-ico{animation:none!important}}
+/* v1.6.1 fixes */
+.message.sys{align-self:stretch!important;max-width:100%!important;background:none!important;border:0!important;padding:4px 0!important;box-shadow:none!important;overflow:visible!important;text-align:center;font-size:12.5px;color:var(--tx);animation:sysIn2 .5s cubic-bezier(.2,1.3,.4,1) both!important}
+.message.sys::after,.message.sys::before{display:none!important}
+.message.sys .syschip{display:inline-block;max-width:92%;padding:7px 14px;border-radius:16px;background:#2a2450;border:1px solid rgba(124,92,255,.45);color:#d9d4ff;line-height:1.35;word-break:break-word;white-space:normal}
+.message.sys .syschip b{color:#fff}
+@keyframes sysIn2{from{opacity:0;transform:scale(.85) translateY(10px)}to{opacity:1;transform:none}}
+.message.swiping{will-change:transform}
+.message.swiping::before{content:"↩";position:absolute;left:-40px;top:50%;width:30px;height:30px;margin-top:-15px;border-radius:50%;background:var(--b3);color:var(--tx);display:grid;place-items:center;font-size:16px;opacity:var(--p,0);transform:scale(calc(.4 + var(--p,0)*.6));pointer-events:none}
+.message.swiping.ready::before{background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;animation:rdyPop .35s cubic-bezier(.3,2,.5,1)}
+@keyframes rdyPop{from{transform:scale(.5)}60%{transform:scale(1.35)}}
+.nk-box{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 2px;text-align:left}
+.nk-box div{background:var(--b3);border-radius:14px;padding:10px 12px;display:grid;gap:2px}.nk-box small{color:var(--mu);font-size:11px}.nk-box b{font-size:14px;word-break:break-word}
