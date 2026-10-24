@@ -38,7 +38,7 @@ async function openPremium(){
   try{
     if(Number(localStorage.getItem(UK)||0)>Date.now()){await goPrivate();return;}
     localStorage.removeItem(UK);
-    renderPremium({onClose:()=>{$("#premiumView").hidden=true;$("#app").hidden=false;unwind();},onUnlock:m=>{localStorage.setItem(UK,String(Date.now()+m*60000));goPrivate();}});
+    renderPremium({onClose:()=>{$("#premiumView").hidden=true;$("#app").hidden=false;unwind();},onUnlock:m=>{if(m>0)localStorage.setItem(UK,String(Date.now()+m*60000));else localStorage.removeItem(UK);goPrivate();}});
     $("#app").hidden=true;const pv=$("#premiumView");pv.style.pointerEvents="none";pv.hidden=false;navPush();setTimeout(()=>{pv.style.pointerEvents=""},700);
   }catch(err){console.error(err);toast("Please try again.");}
 }
