@@ -20,3 +20,4 @@ details{border-bottom:1px solid var(--line);padding:12px 0}summary{cursor:pointe
 .checkout-card{width:min(420px,100%);background:var(--bg2);border:1px solid var(--line);border-radius:24px;padding:26px;display:grid;gap:12px}.checkout-card p{color:var(--mute);margin:0}.checkout-card form{display:grid;gap:10px}
 .checkout-card input{background:#14141a;border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:13px;outline:0;width:100%}.checkout-card input:focus{border-color:var(--gold)}
 @media(max-width:720px){.premium-lower{grid-template-columns:1fr}}
+.choice{text-align:center}.choice .btn{width:100%}.choice-ico{width:54px;height:54px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:linear-gradient(135deg,#ecd69c,var(--gold2));color:#111;font-size:26px;font-weight:700}

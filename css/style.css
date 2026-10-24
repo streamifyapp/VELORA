@@ -51,3 +51,20 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:500;margin:0;l
 .mobile-nav{display:flex;position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:45;background:rgba(18,18,23,.88);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid #2c2c36;border-radius:24px;padding:6px}
 .mobile-nav button{flex:1;background:none;border:0;display:grid;justify-items:center;font-size:10px;color:var(--mute);padding:6px 0;border-radius:18px}.mobile-nav button span{font-size:18px;line-height:1}.mobile-nav button.active{color:var(--gold);background:#1d1b14}
 .hero{min-height:62vh;margin:12px}.lookbook,.detail-layout,.bag-layout{grid-template-columns:1fr}.product-grid,.shop-grid{grid-template-columns:repeat(2,1fr);gap:10px;padding-left:14px;padding-right:14px}.premium-trigger span:last-child{display:none}.premium-trigger{padding:0 13px}.bag-summary{position:static}.shop-toolbar{flex-direction:column;align-items:stretch}.footer-bottom{flex-direction:column}}
+/* responsive hardening */
+html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+.app-shell,main,section{max-width:100%}
+.site-header>*{min-width:0}.brand{flex:1 1 auto;min-width:0;display:block}.brand img{height:24px;width:auto;max-width:100%;object-fit:contain;object-position:left}
+.header-actions{flex:none}.premium-trigger{flex:none;white-space:nowrap}.diamond{font-size:16px;line-height:1}
+.overlay-view{height:100dvh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.premium-page{width:100%;overflow-x:hidden}.premium-page *{min-width:0}
+.plans{grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr))}
+.referral-form input{font-size:16px}.premium-hero h1,.premium-lower h2{overflow-wrap:anywhere}
+.premium-top img{height:24px;width:auto;max-width:60vw}
+@media(max-width:767px){
+.site-header{padding:10px 12px;gap:8px;height:60px}.mobile-menu,.icon-button{width:40px;height:40px;flex:none}.header-actions{gap:8px}
+.premium-trigger{width:40px;min-width:40px;height:40px;min-height:40px;padding:0;justify-content:center}.premium-trigger span:last-child{display:none}
+.hero{min-height:56vh}.premium-page{padding:max(12px,env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom))}
+.referral-wrap{padding:14px}.plan-card{padding:20px}.page-intro{padding-top:22px}}
+@media(max-width:360px){.brand img{height:20px}.product-grid,.shop-grid{gap:8px}}
+@media(min-width:1200px){.hero{min-height:600px}.product-grid{grid-template-columns:repeat(4,1fr)}}
