@@ -68,3 +68,4 @@ html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
 .referral-wrap{padding:14px}.plan-card{padding:20px}.page-intro{padding-top:22px}}
 @media(max-width:360px){.brand img{height:20px}.product-grid,.shop-grid{gap:8px}}
 @media(min-width:1200px){.hero{min-height:600px}.product-grid{grid-template-columns:repeat(4,1fr)}}
+.diamond svg{width:20px;height:20px;display:block}

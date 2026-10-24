@@ -80,3 +80,12 @@
 @media(min-width:1400px){.chat-shell{grid-template-columns:420px 1fr}}
 @media(max-width:380px){.conversation-header{gap:6px;padding:8px}.conversation-header .ib{width:36px;height:36px}.stk{width:120px;height:120px}}
 .chat-shell,.chat-main,.chat-sidebar{height:100%}#chatView{height:100dvh}
+.draft{flex:1;min-width:0;max-height:140px;overflow-y:auto;background:var(--b2);border:1px solid var(--ln);border-radius:22px;padding:11px 16px;outline:0;font-size:16px;line-height:1.4;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;color:var(--tx)}.draft:focus{border-color:var(--c)}.draft:empty:before{content:attr(data-ph);color:var(--mu);pointer-events:none}
+#stickerToggle svg{display:block}
+.stk-panel{background:var(--b1);border-top:1px solid var(--ln);padding:10px 12px 12px;height:min(46dvh,340px);display:flex;flex-direction:column;gap:8px;animation:up .2s}
+.stk-head{display:flex;align-items:center;gap:8px}.stk-head b{flex:1;font-size:14px}.stk-head span{font-size:12px;color:var(--mu)}.stk-x{width:30px;height:30px;border-radius:50%;border:0;background:var(--b3);color:var(--tx)}
+.stk-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));grid-auto-rows:92px;gap:10px;align-content:start;padding:2px}
+.stk-grid .stk-i{background:var(--b2);border:1px solid var(--ln);border-radius:16px;padding:6px;width:100%;height:100%;display:grid;place-items:center}.stk-grid .stk-i img{width:100%;height:100%;object-fit:contain;pointer-events:none}.stk-grid .stk-i:active{transform:scale(.94);border-color:var(--c)}
+.stk-grid .stk-add{width:100%;height:100%;border:2px dashed var(--ln);background:none;border-radius:16px;display:grid;place-items:center;align-content:center;gap:2px;color:var(--c2);font-size:12px}.stk-add span{font-size:30px;line-height:1}
+.stk-hint{text-align:center;color:var(--mu);font-size:11px}
+@media(min-width:761px){.stk-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));grid-auto-rows:110px}.stk-panel{height:300px}}
