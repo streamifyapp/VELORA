@@ -1,5 +1,7 @@
 // Back-button support: each overlay (premium / chat / DM) pushes one history entry.
-let n=0,ignore=0;
+// unwind() deliberately does NOT call history.go(): programmatic traversal raced with late popstate
+// events (after sign-out) and closed the next overlay, bouncing the user back to the shop.
+let n=0;
 export function push(){try{history.pushState({v:1},"");n++}catch{}}
-export function unwind(){if(n>0){const k=n;n=0;ignore=1;setTimeout(()=>{ignore=0},700);history.go(-k)}}
-window.addEventListener("popstate",()=>{if(ignore){ignore=0;return}if(n>0)n--;window.dispatchEvent(new Event("velora:back"))});
+export function unwind(){n=0}
+window.addEventListener("popstate",()=>{if(n>0)n--;window.dispatchEvent(new Event("velora:back"))});
