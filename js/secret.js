@@ -1,6 +1,8 @@
+import { unwind } from "./nav.js";
 // Explicit navigation only. Do not auto-dismiss the private area on blur or tab changes:
 // mobile keyboards, password managers and normal app switching can trigger those events.
 export function backToStore(){
+  unwind();
   const chat=document.getElementById("chatView");
   if(chat){chat.innerHTML="";chat.hidden=true;}
   const premium=document.getElementById("premiumView");
