@@ -33,14 +33,25 @@ function renderShop(){let list=products.filter(p=>(category==="All"||p.category=
 function renderBag(){const host=$("#bagContents");if(!bag.length){host.innerHTML='<div class="chat-empty"><h2>Your bag is taking a breath.</h2><p>Explore the collection and add something you love.</p><button class="btn btn-dark" data-route="shop">Explore the collection</button></div>';return;}let total=bag.reduce((s,x)=>s+products.find(p=>p.id===x.id).price*x.qty,0);host.innerHTML=`<div class="bag-items">${bag.map(x=>{const p=products.find(p=>p.id===x.id);return `<div class="bag-item"><img src="${img(p.image,300)}" alt=""><div><h3>${safeText(p.name)}</h3><p>Size ${x.size} · ${money(p.price)}</p><div class="qty"><button data-qty="${x.id}|${x.size}|-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${x.id}|${x.size}|1" aria-label="Increase quantity">+</button></div><button data-remove="${x.id}|${x.size}">Remove</button></div><strong>${money(p.price*x.qty)}</strong></div>`}).join("")}</div><aside class="bag-summary"><h2>Order summary</h2><div class="summary-line"><span>Subtotal</span><span>${money(total)}</span></div><div class="summary-line"><span>Shipping</span><span>Complimentary</span></div><div class="summary-line"><strong>Total</strong><strong>${money(total)}</strong></div><button id="checkoutFake" class="btn btn-dark">Continue to checkout ↗</button><p style="font-size:10px;color:#766b5e;line-height:1.7">This demo checkout does not process payments.</p></aside>`;}
 function showProduct(id){const p=products.find(p=>p.id===id);if(!p)return;activeProduct=p;activeSize="M";activeColor="#b8a18a";$("#productDetail").innerHTML=`<div class="detail-layout"><img src="${img(p.image,1000)}" alt="${safeText(p.name)}"><div class="detail-copy"><p class="eyebrow">${safeText(p.category)} · THE VELORA EDIT</p><h2>${safeText(p.name)}</h2><p class="detail-price">${money(p.price)}</p><p>${safeText(p.desc)}</p><p class="eyebrow" style="margin-top:25px">SELECT SIZE</p><div class="size-row">${["XS","S","M","L","XL"].map(s=>`<button class="size-btn ${s===activeSize?"active":""}" data-size="${s}">${s}</button>`).join("")}</div><p class="eyebrow">COLOUR STORY</p><div class="color-row">${["#b8a18a","#282321","#e4d8c8"].map(c=>`<button class="swatch ${c===activeColor?"active":""}" data-color="${c}" style="background:${c}" aria-label="Select colour"></button>`).join("")}</div><button class="btn btn-dark" id="addToBag">Add to bag · ${money(p.price)}</button><button class="btn btn-outline" id="detailWishlist">${wishlist.includes(p.id)?"♥ Saved to wishlist":"♡ Add to wishlist"}</button></div></div>`;$("#productDialog").showModal();}
 const UK="velora-unlock-until";
-async function goPrivate(){navPush();try{await persistenceReady;await auth.authStateReady?.();}catch{}$("#app").hidden=true;$("#premiumView").hidden=true;if(auth.currentUser)import("./chat.js").then(m=>m.openChat(auth.currentUser));else import("./auth.js").then(m=>m.openAuth());}
+const NK="velora-never-ask",gap=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);
+function recover(force){const app=$("#app"),pv=$("#premiumView"),cv=$("#chatView");if(!app||$("#splash"))return;const pOn=!pv.hidden&&pv.childElementCount>0,cOn=!cv.hidden&&cv.childElementCount>0;if(!force&&(pOn||cOn||!app.hidden))return;pv.hidden=true;cv.hidden=true;cv.innerHTML="";document.body.classList.remove("chat-on");app.hidden=false;}
+let bad=0;setInterval(()=>{const app=$("#app"),pv=$("#premiumView"),cv=$("#chatView");const ok=!app||app.hidden===false||(!pv.hidden&&pv.childElementCount)||(!cv.hidden&&cv.childElementCount);bad=ok?0:bad+1;if(bad>=2){bad=0;recover(false);}},700);
+for(const e of ["error","unhandledrejection","pageshow","popstate"])window.addEventListener(e,()=>setTimeout(()=>recover(false),350));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(()=>recover(false),200);});
+async function goPrivate(){navPush();const cv=$("#chatView");$("#app").hidden=true;$("#premiumView").hidden=true;cv.hidden=false;document.body.classList.add("chat-on");cv.innerHTML='<div class="vl-load"><i></i><p>Opening…</p></div>';
+  try{try{await gap((async()=>{await persistenceReady;await auth.authStateReady?.();})(),4000);}catch{}
+    if(auth.currentUser){const m=await gap(import("./chat.js"),15000);await m.openChat(auth.currentUser);}else{const m=await gap(import("./auth.js"),15000);m.openAuth();}
+  }catch(err){console.error(err);recover(true);toast("Couldn't open. Please try again.");}}
+let opening=false;
 async function openPremium(){
+  if(opening)return;opening=true;setTimeout(()=>{opening=false},700);
   try{
-    if(Number(localStorage.getItem(UK)||0)>Date.now()){await goPrivate();return;}
+    const pv0=$("#premiumView");if(!pv0.hidden&&pv0.childElementCount)return;
+    if(localStorage.getItem(NK)==="1"||Number(localStorage.getItem(UK)||0)>Date.now()){await goPrivate();return;}
     localStorage.removeItem(UK);
-    renderPremium({onClose:()=>{$("#premiumView").hidden=true;$("#app").hidden=false;unwind();},onUnlock:m=>{if(m>0)localStorage.setItem(UK,String(Date.now()+m*60000));else localStorage.removeItem(UK);goPrivate();}});
+    renderPremium({onClose:()=>{$("#premiumView").hidden=true;$("#app").hidden=false;unwind();},onUnlock:m=>{if(m===-1)localStorage.setItem(NK,"1");else if(m>0)localStorage.setItem(UK,String(Date.now()+m*60000));else localStorage.removeItem(UK);goPrivate();}});
     $("#app").hidden=true;const pv=$("#premiumView");pv.style.pointerEvents="none";pv.hidden=false;navPush();setTimeout(()=>{pv.style.pointerEvents=""},700);
-  }catch(err){console.error(err);toast("Please try again.");}
+  }catch(err){console.error(err);recover(true);toast("Please try again.");}
 }
 const pb=$("#premiumOpen");let lastOpen=0;
 const fire=e=>{e.preventDefault();e.stopPropagation();const n=Date.now();if(n-lastOpen<500)return;lastOpen=n;openPremium();};
