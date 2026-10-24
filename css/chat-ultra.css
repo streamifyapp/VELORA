@@ -169,10 +169,8 @@
 
 /* ===== v2 · "Floating Atelier" layout ===== */
 #chatView{--rad:34px}
-.chat-shell{padding:16px;gap:16px}
-.chat-sidebar,.chat-main{border-radius:var(--rad);border:1px solid var(--ln);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07)}
-.chat-main{background:rgba(8,8,16,.5);backdrop-filter:blur(20px)}
-.chat-main::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(rgba(255,255,255,.075) 1px,transparent 1.3px) 0 0/24px 24px;-webkit-mask:linear-gradient(#000,transparent 85%);mask:linear-gradient(#000,transparent 85%)}
+.chat-shell{padding:0;gap:0}
+.chat-sidebar{margin:14px 0 14px 14px;border-radius:var(--rad);border:1px solid var(--ln);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07)}
 .ico{width:1.2em;height:1.2em}
 .ib .ico{width:20px;height:20px}
 .ib{width:42px;height:42px;border-radius:15px}
@@ -195,44 +193,13 @@
 .avatar:has(.on)::after{inset:-4px;border-radius:inherit;padding:2.5px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 .ch-who .avatar{width:46px;height:46px;font-size:18px}
 .friend-meta strong{font-size:15.5px}.fr-end small{font-size:11px;color:var(--mu)}
-/* conversation: floating island header + dock */
-.conversation-header{position:absolute;top:14px;left:14px;right:14px;z-index:6;border:1px solid var(--ln);border-radius:30px;padding:8px 10px 8px 8px;gap:8px;background:rgba(14,14,26,.6);box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1)}
-.conversation-header .ib{background:rgba(255,255,255,.05)}
-#conversationBack{display:none}
-.conversation-body{padding:96px 18px 14px;z-index:1}
-.pin-bar,.msg-search{position:absolute;top:86px;left:22px;right:22px;z-index:5;border:1px solid var(--ln);border-radius:20px;box-shadow:0 14px 34px rgba(0,0,0,.4)}
-.pin-bar:not([hidden])~.conversation-body{padding-top:150px}
-.dsep{align-self:stretch;display:flex;align-items:center;gap:14px;margin:16px 0 8px}
-.dsep::before,.dsep::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14))}.dsep::after{transform:scaleX(-1)}
-.dsep span{background:none;border:0;backdrop-filter:none;color:var(--mu);font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;padding:0}
-/* bubbles: gradient-edge glass + leaf shapes */
-.message{background:linear-gradient(rgba(22,22,36,.92),rgba(22,22,36,.92)) padding-box,linear-gradient(140deg,rgba(255,255,255,.3),rgba(255,255,255,.04) 55%,rgba(255,255,255,.12)) border-box;border:1px solid transparent;border-radius:24px 24px 24px 6px;padding:10px 15px 7px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-.message.mine{background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 38%,var(--c2)) 120%) padding-box,linear-gradient(140deg,rgba(255,255,255,.7),rgba(255,255,255,.1)) border-box;border-radius:24px 24px 6px 24px;box-shadow:0 14px 34px color-mix(in srgb,var(--c) 40%,transparent),inset 0 1px 0 rgba(255,255,255,.3)}
-.b-sharp .message{border-radius:8px 8px 8px 2px}.b-sharp .message.mine{border-radius:8px 8px 2px 8px}
-.b-soft .message{border-radius:30px 30px 30px 10px}.b-soft .message.mine{border-radius:30px 30px 10px 30px}
-.message.sticker,.message.sticker.mine,.message.sys,.message.sys.mine{background:none;border:0;box-shadow:none}
-.message time{font-size:10px;letter-spacing:.03em}
-.reacts{margin-top:4px}.reacts span{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:99px;font-size:12px}
-.reacts .ico,.react-row .ico{width:15px;height:15px}
+/* DM keeps the classic layout; only icon sizing/colours carry over */
+.reacts span{display:inline-flex;align-items:center;gap:3px}.reacts .ico,.react-row .ico{width:15px;height:15px}
 .rx-love{color:#ff5c8a}.rx-like{color:#5aa9ff}.rx-laugh{color:#ffc83d}.rx-wow{color:#ff9f43}.rx-sad{color:#5fd4ff}.rx-pray{color:#b79bff}
-.react-row{justify-content:space-between;padding:8px 12px}.react-row button{width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.06);display:grid;place-items:center}.react-row .ico{width:24px;height:24px}
-.react-row button:hover{background:rgba(255,255,255,.14)}
+.react-row button{display:grid;place-items:center}.react-row .ico{width:24px;height:24px}
 .message .del .ico,.fwd .ico{width:13px;height:13px}
-/* dock compose */
-.chat-compose{margin:0;padding:6px 14px max(14px,env(safe-area-inset-bottom));gap:10px;align-items:flex-end;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;position:relative;z-index:2}
-.chat-compose:focus-within{border:0;box-shadow:none}
-.chat-compose .ib{width:48px;height:48px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid var(--ln);color:#fff;backdrop-filter:blur(16px)}
-.chat-compose .ib:hover{background:rgba(255,255,255,.13)}
-.chat-compose .ib svg{width:22px;height:22px}
-.chat-compose .draft{min-height:48px;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:24px;padding:13px 20px;backdrop-filter:blur(16px);box-shadow:inset 0 2px 10px rgba(0,0,0,.25);transition:border-color .3s,box-shadow .35s}
-.chat-compose .draft:focus{border-color:color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 16%,transparent),0 0 40px color-mix(in srgb,var(--c) 24%,transparent)}
-.send{width:48px;height:48px;border-radius:18px}.send .ico{width:22px;height:22px}
-.send.mic{animation:micBreath 2.6s ease-in-out infinite}
-.rec-bar{margin:0 14px 10px;border-radius:24px}.rec-bar button .ico{width:18px;height:18px}
-.reply-bar{margin:0 14px;border-radius:20px 20px 0 0}.reply-bar .ico{vertical-align:-.25em}
-.to-bottom{width:46px;height:46px;border-radius:17px;display:grid;place-items:center;padding:0;right:18px}.to-bottom b{position:absolute;top:-6px;right:-6px;background:var(--c);border-radius:99px;font-size:11px;padding:1px 7px}.to-bottom b:empty{display:none}
-.stk-panel{margin:0 14px;border-radius:26px 26px 0 0}
-.stk-head b{font-size:15px;letter-spacing:-.01em}.stk-x .ico{width:16px;height:16px}
+.chat-compose .ib .ico,.send .ico{width:21px;height:21px}.rec-bar button .ico{width:18px;height:18px}
+.to-bottom{display:grid;place-items:center}.to-bottom b:empty{display:none}.stk-x .ico{width:16px;height:16px}
 /* sheets & lists with icons */
 .sheet-card>button{display:flex;align-items:center;gap:14px;text-align:left;padding:14px 16px;font-weight:550}
 .sheet-card>button .ico{width:21px;height:21px;color:var(--c2);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--c2) 50%,transparent))}
@@ -249,17 +216,6 @@
 .msg-search .ib .ico,.pin-bar .ib .ico,.request-actions .ico{width:16px;height:16px}
 .poll>b .ico{width:15px;height:15px}
 .ch-meta strong{font-size:16.5px}
-/* mobile: full-bleed */
-@media(max-width:760px){
- .chat-shell{padding:0;gap:0}.chat-sidebar,.chat-main{border-radius:0;border:0;box-shadow:none}
- .side-top{padding-top:max(18px,env(safe-area-inset-top))}
- #conversationBack{display:grid}
- .conversation-header{top:max(10px,env(safe-area-inset-top));left:10px;right:10px}
- .conversation-body{padding:calc(88px + env(safe-area-inset-top)) 12px 12px}
- .pin-bar,.msg-search{top:calc(78px + env(safe-area-inset-top));left:16px;right:16px}
- .chat-compose{padding:6px 10px max(12px,env(safe-area-inset-bottom));gap:8px}
- .chat-compose .ib,.send{width:46px;height:46px;border-radius:17px}
-}
-@media(max-width:380px){.conversation-header .ib{width:36px;height:36px}}
+@media(max-width:760px){.chat-sidebar{margin:0;border-radius:0;border:0;box-shadow:none}.side-top{padding-top:max(18px,env(safe-area-inset-top))}}
 .avatar:has(.on)::after{animation:ringGlow 2.8s ease-in-out infinite}
 @keyframes ringGlow{50%{filter:hue-rotate(40deg) drop-shadow(0 0 6px var(--c2));opacity:.8}}
