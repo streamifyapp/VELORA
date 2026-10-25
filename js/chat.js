@@ -173,15 +173,17 @@ el=document.createElement("div");el.className=cls(m)+(now()-m.createdAt<8000?" f
 if(stick||m.sender===me.uid)body.scrollTop=body.scrollHeight;clearTimeout(render.t);render.t=setTimeout(markRead,300)};
 const msgRef=fb.query(fb.ref(db,`chats/${id}/messages`),fb.orderByKey(),fb.limitToLast(30));convUnsubs.push(fb.onChildAdded(msgRef,render),fb.onChildChanged(msgRef,render));
 /* infinite history: older messages load in batches while scrolling up */
-const SK=n=>`<div class="sk-wrap" id="skTop">${Array.from({length:n},(_,i)=>`<i class="sk${i%2?" r":""}" style="width:${[46,62,38,55][i%4]}%"></i>`).join("")}</div>`;
-const loadOlder=()=>{if(olBusy)return olBusy;if(olDone||!oldKey)return Promise.resolve();return olBusy=(async()=>{body.insertAdjacentHTML("afterbegin",SK(4));let arr=[];try{const s=await fb.get(fb.query(fb.ref(db,`chats/${id}/messages`),fb.orderByKey(),fb.endBefore(oldKey),fb.limitToLast(40)));s.forEach(c=>{arr.push([c.key,c.val()])})}catch{$("#skTop")?.remove();return}
-if(active?.uid!==f.uid)return;$("#skTop")?.remove();const cl=cleared[id]||0;if(arr.length<40||(arr.length&&arr[arr.length-1][1]?.createdAt<=cl))olDone=true;
+const olShow=v=>{let e=$("#olLoad");if(!e){e=document.createElement("div");e.id="olLoad";e.className="ol-load";e.innerHTML='<i class="sk"></i><i class="sk r"></i><i class="sk"></i>';$("#chatMain").append(e)}e.classList.toggle("on",!!v)};
+const loadOlder=()=>{if(olBusy)return olBusy;if(olDone||!oldKey)return Promise.resolve();return olBusy=(async()=>{olShow(1);let arr=[];try{const s=await fb.get(fb.query(fb.ref(db,`chats/${id}/messages`),fb.orderByKey(),fb.endBefore(oldKey),fb.limitToLast(40)));s.forEach(c=>{arr.push([c.key,c.val()])})}catch{olShow(0);return}
+if(active?.uid!==f.uid)return;const cl=cleared[id]||0;if(arr.length<40||(arr.length&&arr[arr.length-1][1]?.createdAt<=cl))olDone=true;
 const frag=document.createDocumentFragment();let lastD="";if(olDone){const e=document.createElement("div");e.className="chat-start";e.textContent="Beginning of your conversation";frag.append(e)}
 arr.forEach(([k,m])=>{if(!m)return;msgs[k]=m;if(!oldKey||k<oldKey)oldKey=k;if(hidden[id+k]||m.createdAt<=cl)return;const d=day(m.createdAt);if(d!==lastD){lastD=d;const sp=document.createElement("div");sp.className="dsep";sp.innerHTML=`<span>${d}</span>`;frag.append(sp)}const el=document.createElement("div");el.className=cls(m);el.dataset.message=k;el.innerHTML=build(k,m);frag.append(el)});
 const f0=body.firstElementChild;if(lastD&&f0?.classList.contains("dsep")&&f0.textContent===lastD)f0.remove();
-const ph=body.scrollHeight,pt=body.scrollTop;body.prepend(frag);body.scrollTop=pt+body.scrollHeight-ph;arr.forEach(([k,m])=>m?.type==="voice"&&vpUi(k));
-if(!olDone&&body.scrollHeight<body.clientHeight+300)setTimeout(loadOlder,60)})().finally(()=>{olBusy=null})};
-body.addEventListener("scroll",()=>{if(body.scrollTop<250)loadOlder()},{passive:true});setTimeout(()=>{if(body.scrollHeight<body.clientHeight+300)loadOlder()},700);
+const ph=body.scrollHeight,pt=body.scrollTop;body.style.overflowY="hidden";body.prepend(frag);body.scrollTop=pt+body.scrollHeight-ph;requestAnimationFrame(()=>{body.style.overflowY=""});
+arr.forEach(([k,m])=>m?.type==="voice"&&vpUi(k));
+body.querySelectorAll(".message:not([data-h]) img").forEach(im=>{const el=im.closest(".message");if(!el||im.complete)return;el.dataset.h=el.offsetHeight;im.addEventListener("load",()=>{const d=el.offsetHeight-(+el.dataset.h||0);el.dataset.h=el.offsetHeight;if(d&&el.offsetTop+el.offsetHeight<=body.scrollTop+4)body.scrollTop+=d},{once:true})});
+if(!olDone&&body.scrollHeight<body.clientHeight+300)setTimeout(loadOlder,60)})().finally(()=>{olBusy=null;olShow(0)})};
+body.addEventListener("scroll",()=>{if(body.scrollTop<900)loadOlder()},{passive:true});setTimeout(()=>{if(body.scrollHeight<body.clientHeight+300)loadOlder()},700);
 window.__jump=async k=>{let n=0;while(!body.querySelector(`[data-message="${k}"]`)&&!olDone&&n++<80)await loadOlder();const t=body.querySelector(`[data-message="${k}"]`);if(t){t.scrollIntoView({block:"center"});t.classList.add("flash");setTimeout(()=>t.classList.remove("flash"),1500)}};
 function markRead(){if(active?.uid!==f.uid)return;lastRead[id]=Date.now();S("vc-lastread",lastRead);if(cfg.receipts&&lastInKey&&lastInKey>wroteRead&&document.visibilityState==="visible"){wroteRead=lastInKey;fb.set(fb.ref(db,`chats/${id}/read/${me.uid}`),lastInKey).catch(()=>{})}}
 const vis=()=>markRead();document.addEventListener("visibilitychange",vis);window.addEventListener("focus",vis);convUnsubs.push(()=>{document.removeEventListener("visibilitychange",vis);window.removeEventListener("focus",vis)});
