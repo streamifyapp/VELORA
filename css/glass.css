@@ -160,7 +160,6 @@
 
 
 /* ===== v4 ===== */
-#chatView #dmHome{width:28px;height:28px}#chatView #dmHome .ico{transform:scale(.8)}
 /* infinite history */
 #chatView .conversation-body{overflow-anchor:none}
 #chatView .sk-wrap{display:grid;gap:8px;padding:6px 0;width:100%;flex:none}
@@ -176,3 +175,4 @@
 #chatView .ol-load{position:absolute;z-index:4;left:14px;right:14px;top:calc(var(--top) + 76px);display:grid;gap:8px;pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity .2s,transform .2s}
 #chatView .ol-load.on{opacity:1;transform:none}
 #chatView .ol-load .sk{width:48%;height:30px}#chatView .ol-load .sk:nth-child(2){width:36%}#chatView .ol-load .sk:nth-child(3){width:58%}
+#chatView .conversation-body{scroll-behavior:auto!important}
