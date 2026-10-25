@@ -178,8 +178,9 @@ const loadOlder=()=>{if(olBusy)return olBusy;if(olDone||!oldKey)return Promise.r
 if(active?.uid!==f.uid)return;const cl=cleared[id]||0;if(arr.length<40||(arr.length&&arr[arr.length-1][1]?.createdAt<=cl))olDone=true;
 const frag=document.createDocumentFragment();let lastD="";if(olDone){const e=document.createElement("div");e.className="chat-start";e.textContent="Beginning of your conversation";frag.append(e)}
 arr.forEach(([k,m])=>{if(!m)return;msgs[k]=m;if(!oldKey||k<oldKey)oldKey=k;if(hidden[id+k]||m.createdAt<=cl)return;const d=day(m.createdAt);if(d!==lastD){lastD=d;const sp=document.createElement("div");sp.className="dsep";sp.innerHTML=`<span>${d}</span>`;frag.append(sp)}const el=document.createElement("div");el.className=cls(m);el.dataset.message=k;el.innerHTML=build(k,m);frag.append(el)});
-const f0=body.firstElementChild;if(lastD&&f0?.classList.contains("dsep")&&f0.textContent===lastD)f0.remove();
-const ph=body.scrollHeight,pt=body.scrollTop;body.style.overflowY="hidden";body.prepend(frag);body.scrollTop=pt+body.scrollHeight-ph;requestAnimationFrame(()=>{body.style.overflowY=""});
+const bt=body.getBoundingClientRect().top;let an=null;for(const c of body.children){if(c.dataset.message&&c.getBoundingClientRect().bottom>bt+1){an=c;break}}const y0=an?an.getBoundingClientRect().top:0,pt=body.scrollTop,ph=body.scrollHeight,f0=body.firstElementChild;
+body.style.overflowY="hidden";body.style.scrollBehavior="auto";if(lastD&&f0?.classList.contains("dsep")&&f0.textContent===lastD)f0.remove();body.prepend(frag);
+body.scrollTop=an?pt+(an.getBoundingClientRect().top-y0):pt+body.scrollHeight-ph;requestAnimationFrame(()=>{body.style.overflowY=""});
 arr.forEach(([k,m])=>m?.type==="voice"&&vpUi(k));
 body.querySelectorAll(".message:not([data-h]) img").forEach(im=>{const el=im.closest(".message");if(!el||im.complete)return;el.dataset.h=el.offsetHeight;im.addEventListener("load",()=>{const d=el.offsetHeight-(+el.dataset.h||0);el.dataset.h=el.offsetHeight;if(d&&el.offsetTop+el.offsetHeight<=body.scrollTop+4)body.scrollTop+=d},{once:true})});
 if(!olDone&&body.scrollHeight<body.clientHeight+300)setTimeout(loadOlder,60)})().finally(()=>{olBusy=null;olShow(0)})};
