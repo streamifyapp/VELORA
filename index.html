@@ -316,21 +316,21 @@ var ap;function api(){return ap||(ap=new Promise(function(r){if(window.YT&&YT.Pl
 var ID=/^[\w-]{11}$/;
 function YTA(){var d=document.createElement('div');d.style.cssText='position:fixed;bottom:0;right:0;width:64px;height:64px;opacity:.01;pointer-events:none;z-index:-999';var h=document.createElement('div');d.appendChild(h);document.body.appendChild(d);
 var s=this;s._l={};s._v=1;s._r=1;s.paused=true;s.ended=false;s.readyState=0;s.networkState=0;s.error=null;s._src='';s._id='';s._want=false;s._tok=0;inst.push(s);
-api().then(function(){s.p=new YT.Player(h,{width:'100%',height:'100%',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,playsinline:1,rel:0,origin:location.origin},events:{onReady:function(){s._ok=1;s.p.setVolume(s._v*100);if(s._id)s._go(s._id)},onStateChange:function(e){s._st(e.data)},onError:function(){s._err()}}})});
-setInterval(function(){if(s._ok&&s.p.getPlayerState&&s.p.getPlayerState()===1)s._fire('timeupdate')},250)}
+api().then(function(){s.p=new YT.Player(h,{host:'https://www.youtube-nocookie.com',width:'100%',height:'100%',playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,playsinline:1,rel:0,origin:location.origin},events:{onReady:function(){s._ok=1;s.p.setVolume(s._v*100);if(s._id)s._go(s._id)},onStateChange:function(e){s._st(e.data)},onError:function(){var n=s._alt&&s._alt.shift();if(n){s._id=n;s._go(n)}else s._err()}}})});
+setInterval(function(){if(!(s._ok&&s.p.getPlayerState))return;var st=s.p.getPlayerState();if(s._id&&(st===1||st===3)){var v=s.p.getVideoData&&s.p.getVideoData(),ad=!!(v&&v.video_id&&v.video_id!==s._id);if(ad!==s._ad){s._ad=ad;try{if(ad){s.p.mute();s.p.setPlaybackRate(2)}else{s.p.unMute();s.p.setVolume(s._v*100);s.p.setPlaybackRate(s._r)}}catch(_){}}}if(st===1&&!s._ad)s._fire('timeupdate')},250)}
 var P=YTA.prototype;
 P._fire=function(t){var e={type:t,target:this};if(typeof this['on'+t]==='function')try{this['on'+t](e)}catch(_){}(this._l[t]||[]).forEach(function(f){try{f.call(this,e)}catch(_){}},this)};
 P.addEventListener=function(t,f){(this._l[t]=this._l[t]||[]).push(f)};P.removeEventListener=function(t,f){this._l[t]=(this._l[t]||[]).filter(function(x){return x!==f})};
 P._ms=function(st){try{navigator.mediaSession.playbackState=st}catch(_){}};
-P._st=function(x){if(!this._id)return;if(x===1){this.readyState=4;this.networkState=2;try{this.p.unMute();this.p.setVolume(this._v*100)}catch(_){}if(this.paused){this.paused=false;this._fire('play')}this._ms('playing');this._fire('playing');this._fire('durationchange')}
+P._st=function(x){if(!this._id)return;if(x===1){this.readyState=4;this.networkState=2;if(!this._ad)try{this.p.unMute();this.p.setVolume(this._v*100)}catch(_){}if(this.paused){this.paused=false;this._fire('play')}this._ms('playing');this._fire('playing');this._fire('durationchange')}
 else if(x===3){this.readyState=2;this._fire('waiting')}
 else if(x===2){var s=this;if(this._want&&!this.ended){setTimeout(function(){if(s._want&&s.p&&s.p.playVideo){try{s.p.unMute();s.p.setVolume(s._v*100)}catch(_){}s.p.playVideo()}},40)}else if(!this.paused){this.paused=true;this._ms('paused');this._fire('pause')}}
 else if(x===0){this.ended=true;this.paused=true;this._want=false;this._fire('ended')}};
 P._err=function(){this.error={code:4};this.networkState=3;this._fire('error')};
-P._go=function(id){if(!this._ok)return;var t=++this._tok;this.ended=false;try{this.p.loadVideoById({videoId:id,startSeconds:0});this.p.setVolume(this._v*100);this.p.setPlaybackRate(this._r);if(!this._want)this.p.pauseVideo()}catch(_){this._err()}};
-Object.defineProperty(P,'src',{get:function(){return this._src},set:function(u){var s=this,t=++s._tok;s._src=u;s._id='';s.ended=false;s.error=null;s.readyState=0;s.networkState=2;if(!u)return;var m=/[?&]id=([^&]*)/.exec(u),id=m?decodeURIComponent(m[1]):'';
+P._go=function(id){if(!this._ok)return;var t=++this._tok;this._ad=0;this.ended=false;try{this.p.loadVideoById({videoId:id,startSeconds:0});this.p.setVolume(this._v*100);this.p.setPlaybackRate(this._r);if(!this._want)this.p.pauseVideo()}catch(_){this._err()}};
+Object.defineProperty(P,'src',{get:function(){return this._src},set:function(u){var s=this,t=++s._tok;s._src=u;s._id='';s._alt=[];s.ended=false;s.error=null;s.readyState=0;s.networkState=2;if(!u)return;var m=/[?&]id=([^&]*)/.exec(u),id=m?decodeURIComponent(m[1]):'';
 var run=function(v){if(t!==s._tok)return;s._id=v;s._go(v)};
-if(ID.test(id))run(id);else fetch(u).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){if(!j.id)throw 0;run(j.id)}).catch(function(){if(t===s._tok)s._err()})}});
+if(ID.test(id))run(id);else fetch(u).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){if(!j.id)throw 0;s._alt=j.alt||[];run(j.id)}).catch(function(){if(t===s._tok)s._err()})}});
 Object.defineProperty(P,'currentTime',{get:function(){try{return this._ok&&this._id?this.p.getCurrentTime()||0:0}catch(_){return 0}},set:function(v){try{if(this._ok)this.p.seekTo(v,true)}catch(_){}}});
 Object.defineProperty(P,'duration',{get:function(){try{var d=this._ok&&this._id?this.p.getDuration():0;return d>0?d:NaN}catch(_){return NaN}}});
 Object.defineProperty(P,'volume',{get:function(){return this._v},set:function(v){this._v=Math.max(0,Math.min(1,v));try{if(this._ok)this.p.setVolume(this._v*100)}catch(_){}}});
